@@ -6,12 +6,71 @@ import { TaskCard } from '../components/TaskCard';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import type { TaskStatus, TaskPriority } from '../types/index';
+import type { TaskStatus, TaskPriority,Task } from '../types/index';
+
+const mockTasks: Task[] = [
+  {
+    id: '1',
+    title: 'Design new landing page',
+    description: 'Create wireframes and mockups for the new landing page redesign',
+    status: 'in-progress',
+    priority: 'high',
+    dueDate: '2025-10-20',
+    assignee: 'John Doe',
+    createdAt: '2025-10-15',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '2',
+    title: 'Fix login bug',
+    description: 'Users are experiencing issues logging in with social accounts',
+    status: 'todo',
+    priority: 'high',
+    dueDate: '2025-10-18',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-14',
+    updatedAt: '2025-10-16',
+  },
+  {
+    id: '3',
+    title: 'Update documentation',
+    description: 'Add API documentation for the new endpoints',
+    status: 'completed',
+    priority: 'medium',
+    dueDate: '2025-10-15',
+    assignee: 'John Doe',
+    createdAt: '2025-10-10',
+    updatedAt: '2025-10-15',
+  },
+  {
+    id: '4',
+    title: 'Implement dark mode',
+    description: 'Add dark mode toggle and theme switching functionality',
+    status: 'in-progress',
+    priority: 'medium',
+    dueDate: '2025-10-22',
+    assignee: 'Mike Johnson',
+    createdAt: '2025-10-12',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '5',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure automated testing and deployment workflow',
+    status: 'todo',
+    priority: 'low',
+    dueDate: '2025-10-25',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-13',
+    updatedAt: '2025-10-14',
+  },
+];
 
 export const TaskList: React.FC = () => {
-  const { tasks } = useApp();
+  // const { tasks } = useApp();
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');

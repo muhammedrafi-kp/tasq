@@ -1,4 +1,4 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Activity, Target } from 'lucide-react';
 import {
@@ -18,10 +18,70 @@ import {
 } from 'recharts';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../context/AppContext';
+import type { Task } from "../types/index";
+
+const mockTasks: Task[] = [
+  {
+    id: '1',
+    title: 'Design new landing page',
+    description: 'Create wireframes and mockups for the new landing page redesign',
+    status: 'in-progress',
+    priority: 'high',
+    dueDate: '2025-10-20',
+    assignee: 'John Doe',
+    createdAt: '2025-10-15',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '2',
+    title: 'Fix login bug',
+    description: 'Users are experiencing issues logging in with social accounts',
+    status: 'todo',
+    priority: 'high',
+    dueDate: '2025-10-18',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-14',
+    updatedAt: '2025-10-16',
+  },
+  {
+    id: '3',
+    title: 'Update documentation',
+    description: 'Add API documentation for the new endpoints',
+    status: 'completed',
+    priority: 'medium',
+    dueDate: '2025-10-15',
+    assignee: 'John Doe',
+    createdAt: '2025-10-10',
+    updatedAt: '2025-10-15',
+  },
+  {
+    id: '4',
+    title: 'Implement dark mode',
+    description: 'Add dark mode toggle and theme switching functionality',
+    status: 'in-progress',
+    priority: 'medium',
+    dueDate: '2025-10-22',
+    assignee: 'Mike Johnson',
+    createdAt: '2025-10-12',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '5',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure automated testing and deployment workflow',
+    status: 'todo',
+    priority: 'low',
+    dueDate: '2025-10-25',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-13',
+    updatedAt: '2025-10-14',
+  },
+];
 
 export const Analytics: React.FC = () => {
-  const { tasks } = useApp();
+  // const { tasks } = useApp();
+  const [tasks, setTasks] = useState<Task[]>(mockTasks)
 
   const statusData = [
     { name: 'To Do', value: tasks.filter(t => t.status === 'todo').length },

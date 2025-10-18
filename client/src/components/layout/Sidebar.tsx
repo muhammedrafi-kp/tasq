@@ -1,8 +1,8 @@
-import React from 'react';
+import React,{useState} from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutDashboard, ListTodo, BarChart3, User, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useApp } from '../../context/AppContext';
+import type {IUser} from "../../types/index";
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -11,9 +11,21 @@ const menuItems = [
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 
+const mockUser: IUser = {
+  id: '1',
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
+  // role: 'Product Manager',
+};
+
 export const Sidebar: React.FC = () => {
+    const [user, setUser] = useState<IUser | null>(mockUser);
+  
   const location = useLocation();
-  const { user, logout } = useApp();
+  const handleLogout = ()=>{
+
+  }
 
   return (
     <motion.aside
@@ -63,7 +75,7 @@ export const Sidebar: React.FC = () => {
             </div>
           </div>
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="w-full flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors"
           >
             <LogOut className="w-5 h-5" />

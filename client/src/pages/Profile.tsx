@@ -5,20 +5,32 @@ import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../context/AppContext';
+import type { IUser } from '../types/index';
+
+
+const mockUser: IUser = {
+  id: '1',
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
+  // role: 'Product Manager',
+};
 
 export const Profile: React.FC = () => {
-  const { user, updateUser } = useApp();
+  // const { user, updateUser } = useApp();
+  const [user, setUser] = useState<IUser | null>(mockUser);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    role: user?.role || '',
+    // role: user?.role || '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUser(formData);
+    // updateUser(formData);
+    // setUser({ ...user, ...formData });
     setIsEditing(false);
   };
 
@@ -63,12 +75,12 @@ export const Profile: React.FC = () => {
                   className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-100 shadow-lg"
                 />
                 <h2 className="text-xl font-bold text-gray-900 mt-4">{user.name}</h2>
-                <p className="text-gray-600 mt-1">{user.role}</p>
-                <div className="mt-6 pt-6 border-t border-gray-200">
+                {/* <p className="text-gray-600 mt-1">{user.role}</p> */}
+                {/* <div className="mt-6 pt-6 border-t border-gray-200">
                   <Button variant="outline" className="w-full" size="sm">
                     Change Avatar
                   </Button>
-                </div>
+                </div> */}
               </div>
             </Card>
           </motion.div>
@@ -101,13 +113,13 @@ export const Profile: React.FC = () => {
                     required
                   />
 
-                  <Input
+                  {/* <Input
                     name="role"
                     label="Role"
                     value={formData.role}
                     onChange={handleChange}
                     required
-                  />
+                  /> */}
 
                   <div className="flex gap-3 pt-4">
                     <Button type="submit">
@@ -121,8 +133,7 @@ export const Profile: React.FC = () => {
                         setIsEditing(false);
                         setFormData({
                           name: user.name,
-                          email: user.email,
-                          role: user.role,
+                          email: user.email
                         });
                       }}
                     >
@@ -152,7 +163,7 @@ export const Profile: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-4">
+                  {/* <div className="flex items-start gap-4">
                     <div className="p-3 bg-purple-100 rounded-lg">
                       <Briefcase className="w-6 h-6 text-purple-600" />
                     </div>
@@ -160,7 +171,7 @@ export const Profile: React.FC = () => {
                       <p className="text-sm font-medium text-gray-500">Role</p>
                       <p className="text-base font-semibold text-gray-900 mt-1">{user.role}</p>
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               )}
             </Card>
@@ -172,7 +183,7 @@ export const Profile: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="p-6">
+          {/* <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-3 border-b border-gray-200">
@@ -199,7 +210,7 @@ export const Profile: React.FC = () => {
                 <Button variant="outline" size="sm">Enable</Button>
               </div>
             </div>
-          </Card>
+          </Card> */}
         </motion.div>
       </motion.div>
     </DashboardLayout>

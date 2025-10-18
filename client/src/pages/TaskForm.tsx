@@ -7,14 +7,82 @@ import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
-import { useApp } from '../context/AppContext';
-import type { TaskStatus, TaskPriority } from '../types/index';
+// import { useApp } from '../context/AppContext';
+import type {IUser,Task, TaskStatus, TaskPriority } from '../types/index';
+
+const mockUser: IUser = {
+  id: '1',
+  name: 'John Doe',
+  email: 'john.doe@example.com',
+  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
+  // role: 'Product Manager',
+};
+
+const mockTasks: Task[] = [
+  {
+    id: '1',
+    title: 'Design new landing page',
+    description: 'Create wireframes and mockups for the new landing page redesign',
+    status: 'in-progress',
+    priority: 'high',
+    dueDate: '2025-10-20',
+    assignee: 'John Doe',
+    createdAt: '2025-10-15',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '2',
+    title: 'Fix login bug',
+    description: 'Users are experiencing issues logging in with social accounts',
+    status: 'todo',
+    priority: 'high',
+    dueDate: '2025-10-18',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-14',
+    updatedAt: '2025-10-16',
+  },
+  {
+    id: '3',
+    title: 'Update documentation',
+    description: 'Add API documentation for the new endpoints',
+    status: 'completed',
+    priority: 'medium',
+    dueDate: '2025-10-15',
+    assignee: 'John Doe',
+    createdAt: '2025-10-10',
+    updatedAt: '2025-10-15',
+  },
+  {
+    id: '4',
+    title: 'Implement dark mode',
+    description: 'Add dark mode toggle and theme switching functionality',
+    status: 'in-progress',
+    priority: 'medium',
+    dueDate: '2025-10-22',
+    assignee: 'Mike Johnson',
+    createdAt: '2025-10-12',
+    updatedAt: '2025-10-17',
+  },
+  {
+    id: '5',
+    title: 'Set up CI/CD pipeline',
+    description: 'Configure automated testing and deployment workflow',
+    status: 'todo',
+    priority: 'low',
+    dueDate: '2025-10-25',
+    assignee: 'Jane Smith',
+    createdAt: '2025-10-13',
+    updatedAt: '2025-10-14',
+  },
+];
 
 export const TaskForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { tasks, addTask, updateTask, user } = useApp();
-
+  // const { tasks, addTask, updateTask, user } = useApp();
+  const [user,setUser] = useState<IUser>(mockUser);
+  const [tasks,setTasks] = useState<Task[]>(mockTasks)
+  
   const isEditing = id !== 'new';
   const existingTask = isEditing ? tasks.find(t => t.id === id) : null;
 
@@ -44,9 +112,9 @@ export const TaskForm: React.FC = () => {
     e.preventDefault();
 
     if (isEditing && existingTask) {
-      updateTask(existingTask.id, formData);
+      // updateTask(existingTask.id, formData);
     } else {
-      addTask(formData);
+      // addTask(formData);
     }
 
     navigate('/tasks');

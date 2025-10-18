@@ -4,17 +4,17 @@ import { motion } from 'framer-motion';
 import { CheckCircle2 } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../context/AppContext';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { login } = useApp();
+  // const { login } = useApp();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    login(email, password);
+    // login(email, password);
     navigate('/dashboard');
   };
 

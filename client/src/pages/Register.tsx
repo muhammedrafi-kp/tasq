@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { UserPlus } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import { useApp } from '../context/AppContext';
+// import { useApp } from '../context/AppContext';
 
 export const Register: React.FC = () => {
   const [name, setName] = useState('');
@@ -12,7 +12,7 @@ export const Register: React.FC = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const { register } = useApp();
+  // const { register } = useApp();
   const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -24,7 +24,7 @@ export const Register: React.FC = () => {
       return;
     }
 
-    register(name, email, password);
+    // register(name, email, password);
     navigate('/dashboard');
   };
 
