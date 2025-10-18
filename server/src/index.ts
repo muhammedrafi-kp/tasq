@@ -1,18 +1,35 @@
 import express from "express";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
+import cors from "cors";
+
+import connectDB from "./configs/db";
+import authRouter from "./routes/auth.routes";
+import userRouter from "./routes/user.routes";
+import taskRouter from "./routes/task.routes";
 
 configDotenv();
+connectDB();
 
 const app = express();
 
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
+}));
 app.use(express.json());
 app.use(morgan('dev'));
+
+app.use("/api/auth",authRouter);
+app.use("/api/user",userRouter);
+app.use("/api/task",taskRouter);
 
 app.get("/api/test", (req, res) => {
     res.status(200).json({ message: "ok" });
 })
 
 app.listen(process.env.PORT || 3000, () => {
-    console.log(`server is running on a port ${process.env.PORT}`);
-})
+    console.log(`Server is running on port ${process.env.PORT}✅`);
+});
