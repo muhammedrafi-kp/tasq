@@ -1,0 +1,25 @@
+import { IsNotEmpty, IsOptional, IsEnum, IsDateString, IsArray } from "class-validator";
+
+export class CreateTaskDto {
+  @IsNotEmpty({ message: "Title is required." })
+  title!: string;
+
+  @IsOptional()
+  description?: string;
+
+  @IsEnum(["pending", "in-progress", "completed"], { message: "Status must be pending, in-progress, or completed." })
+  @IsOptional()
+  status?: "pending" | "in-progress" | "completed";
+
+  @IsEnum(["low", "medium", "high"], { message: "Priority must be low, medium, or high." })
+  @IsOptional()
+  priority?: "low" | "medium" | "high";
+
+  @IsOptional()
+  @IsDateString({}, { message: "Due date must be a valid date string." })
+  dueDate?: string;
+
+  @IsOptional()
+  @IsArray({ message: "Tags must be an array of strings." })
+  tags?: string[];
+}

@@ -2,6 +2,7 @@ import express from "express";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 
 import connectDB from "./configs/db";
 import authRouter from "./routes/auth.routes";
@@ -20,11 +21,12 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan('dev'));
 
-app.use("/api/auth",authRouter);
-app.use("/api/user",userRouter);
-app.use("/api/task",taskRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/users", userRouter);
+app.use("/api/tasks", taskRouter);
 
 app.get("/api/test", (req, res) => {
     res.status(200).json({ message: "ok" });

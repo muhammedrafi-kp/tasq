@@ -5,7 +5,9 @@ import { JwtUserPayload } from "../types/express";
 
 export const validateToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const token = req.cookies.accessToken;
+        const token = req.cookies?.accessToken;
+
+        console.log("token :",token)
 
         if (!token) {
             return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: HTTP_MESSAGE.UNAUTHORIZED });
@@ -36,6 +38,3 @@ export const validateToken = async (req: Request, res: Response, next: NextFunct
     }
 }
 
-function extractBearerToken(authHeader?: string): string | null {
-    return authHeader?.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
-}

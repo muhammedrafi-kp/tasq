@@ -10,7 +10,7 @@ export interface IUser extends Document {
     createdAt: Date;
 }
 
-const UserSchema = new Schema<IUser>({
+const userSchema = new Schema<IUser>({
     name: { type: String, required: true },
     email: { type: String, required: true },
     password: {
@@ -22,4 +22,4 @@ const UserSchema = new Schema<IUser>({
     authProvider: { type: String, enum: ["google", "local"], default: "local" }
 }, { timestamps: true });
 
-export const User = model<IUser>('User', UserSchema);
+export const User = model<IUser>('User', userSchema);

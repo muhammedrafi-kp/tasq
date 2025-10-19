@@ -21,7 +21,6 @@ export class AuthService {
 
             if (!isPasswordMatch) throw new HttpError(HTTP_MESSAGE.INCORRECT_PASSWORD, HTTP_STATUS.UNAUTHORIZED);
 
-            console.log(process.env.JWT_ACCESS_SECRET)
 
             const accessToken = generateToken({ userId: user._id }, process.env.JWT_ACCESS_SECRET as string, 3600);
 

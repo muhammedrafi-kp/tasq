@@ -2,9 +2,7 @@ import { Router } from "express";
 import { AuthController } from "../controllers/auth.controller";
 import { AuthService } from "../services/auth.service";
 import { validateRequest } from "../middlewares/validate.middleware";
-import { LoginDto } from "../dtos/request/login.dto";
-import { SignupDto } from "../dtos/request/signup.dto";
-import { GoogleAuthDto } from "../dtos/request/google-auth.dto"
+import { LoginDto, SignupDto, GoogleAuthDto } from "../dtos/request/auth.dto";
 
 const authService = new AuthService()
 const authController = new AuthController(authService);
