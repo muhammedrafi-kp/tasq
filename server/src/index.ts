@@ -3,7 +3,7 @@ import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { setupSwagger } from "./swagger";
+import { setupSwagger } from "./swagger/swagger";
 
 
 import connectDB from "./configs/db";
