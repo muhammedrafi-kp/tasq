@@ -9,6 +9,7 @@ import { AuthDTo } from "../dtos/response/auth.dto";
 import { clearCookie } from "../utils/cookie";
 
 export class AuthService {
+
     async login(email: string, password: string): Promise<{ accessToken: string, user: AuthDTo }> {
         try {
             const user = await User.findOne({ email });
@@ -21,7 +22,6 @@ export class AuthService {
 
             if (!isPasswordMatch) throw new HttpError(HTTP_MESSAGE.INCORRECT_PASSWORD, HTTP_STATUS.UNAUTHORIZED);
 
-
             const accessToken = generateToken({ userId: user._id }, process.env.JWT_ACCESS_SECRET as string, 3600);
 
             return { accessToken, user: AuthDTo.from(user) };
@@ -32,8 +32,6 @@ export class AuthService {
             throw error;
         }
     }
-
-
 
     async signup(name: string, email: string, password: string): Promise<{ accessToken: string, user: AuthDTo }> {
         try {

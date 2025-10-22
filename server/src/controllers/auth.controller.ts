@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { HTTP_STATUS, HTTP_MESSAGE } from "../constants/http";
 import { HttpError } from "../utils/HttpError";
 import { AuthService } from "../services/auth.service";
-import { setCookie, clearCookie } from "../utils/cookie"
+import { setCookie } from "../utils/cookie"
 
 export class AuthController {
 

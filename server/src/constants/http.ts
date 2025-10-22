@@ -34,5 +34,7 @@ export enum HTTP_MESSAGE {
     TOKEN_EXPIRED = "Token expired",
     URL_NOT_FOUND = "Short URL not found",
     GOOGLE_SIGNIN_REQUIRED = "Account linked to Google, Sign in with Google",
-    TASK_ID_REQUIRED="taskId is required"
+    TASK_ID_REQUIRED="taskId is required",
+    USER_ID_REQUIRED="userId is required",
+    TASK_STATS_REQUIRED="task stats are required"
 }

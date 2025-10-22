@@ -23,3 +23,28 @@ export class CreateTaskDto {
   @IsDateString({}, { message: "Due date must be a valid date string." })
   dueDate!: string;
 }
+
+export class UpdateTaskDto {
+  @IsOptional()
+  title?: string;
+
+  @IsOptional()
+  description?: string;
+
+  @IsOptional()
+  status?: "pending" | "in-progress" | "completed";
+
+  @IsOptional()
+  priority?: "low" | "medium" | "high";
+
+  @IsOptional()
+  assignedTo?: string[] | string;
+
+  @IsOptional()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsArray({ message: "Attachments must be an array of strings." })
+  @IsString({ each: true })
+  existingFiles?: string[];
+}
