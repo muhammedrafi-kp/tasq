@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsEnum, IsDateString, IsArray } from "class-validator";
+import { IsNotEmpty, IsOptional, IsEnum, IsDateString, IsArray, IsString } from "class-validator";
 
 export class CreateTaskDto {
   @IsNotEmpty({ message: "Title is required." })
@@ -16,10 +16,10 @@ export class CreateTaskDto {
   priority?: "low" | "medium" | "high";
 
   @IsOptional()
-  @IsDateString({}, { message: "Due date must be a valid date string." })
-  dueDate?: string;
+  @IsArray({ message: "AssignedTo must be an array of email strings." })
+  @IsString({ each: true })
+  assignedTo?: string[] | string;
 
-  @IsOptional()
-  @IsArray({ message: "Tags must be an array of strings." })
-  tags?: string[];
+  @IsDateString({}, { message: "Due date must be a valid date string." })
+  dueDate!: string;
 }

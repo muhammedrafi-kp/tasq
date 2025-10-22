@@ -13,8 +13,6 @@ export const validateToken = async (req: Request, res: Response, next: NextFunct
             return res.status(HTTP_STATUS.UNAUTHORIZED).json({ message: HTTP_MESSAGE.UNAUTHORIZED });
         }
 
-        console.log("token:",token);
-
         const decoded = verifyToken(token, process.env.JWT_ACCESS_SECRET as string) as JwtUserPayload;
 
         req.user = decoded;
