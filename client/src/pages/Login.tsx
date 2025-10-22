@@ -3,14 +3,14 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 import { setUser } from '../redux/authSlice';
 import { loginUser, googleAuthCallback } from "../services/authService";
 import { validateLoginForm } from '../validators/authValidation';
 import type { ValidationErrors } from '../types/index';
 
-export const Login: React.FC = () => {
+const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -127,7 +127,7 @@ export const Login: React.FC = () => {
             label="Email"
             placeholder="john@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setEmail(e.target.value)}
             error={errors.email}
           />
 
@@ -136,7 +136,7 @@ export const Login: React.FC = () => {
             label="Password"
             placeholder="Enter your password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setPassword(e.target.value)}
             error={errors.password}
             showPassword={showPassword}
             onTogglePassword={() => setShowPassword(!showPassword)}
@@ -188,3 +188,5 @@ export const Login: React.FC = () => {
     </div>
   );
 };
+
+export default Login;

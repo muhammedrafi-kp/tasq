@@ -3,15 +3,15 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 import { GoogleLogin } from '@react-oauth/google';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 import { setUser } from '../redux/authSlice';
 import { signupUser, googleAuthCallback } from "../services/authService";
 import { validateRegisterForm } from '../validators/authValidation';
 import type { ValidationErrors } from '../types/index';
 
 
-export const Register: React.FC = () => {
+const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -130,7 +130,7 @@ export const Register: React.FC = () => {
             label="Full Name"
             placeholder="John Doe"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setName(e.target.value)}
             error={errors.name}
           />
 
@@ -139,7 +139,7 @@ export const Register: React.FC = () => {
             label="Email"
             placeholder="john@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setEmail(e.target.value)}
             error={errors.email}
           />
 
@@ -148,7 +148,7 @@ export const Register: React.FC = () => {
             label="Password"
             placeholder="Create a password"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setPassword(e.target.value)}
             error={errors.password}
             showPassword={showPassword}
             onTogglePassword={() => setShowPassword(!showPassword)}
@@ -159,7 +159,7 @@ export const Register: React.FC = () => {
             label="Confirm Password"
             placeholder="Confirm your password"
             value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLTextAreaElement>) => setConfirmPassword(e.target.value)}
             error={errors.confirmPassword}
             showPassword={showConfirmPassword}
             onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -211,3 +211,5 @@ export const Register: React.FC = () => {
     </div>
   );
 };
+
+export default Register;

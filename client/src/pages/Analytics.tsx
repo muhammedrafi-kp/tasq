@@ -15,8 +15,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card } from '../components/ui/Card';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import Card from '../components/ui/Card';
 import { getAnalyticsData } from '../services/taskService';
 
 interface AnalyticsData {
@@ -28,7 +28,7 @@ interface AnalyticsData {
   avgCompletionTime: number;
 }
 
-export const Analytics: React.FC = () => {
+const Analytics: React.FC = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -254,3 +254,5 @@ export const Analytics: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default Analytics;

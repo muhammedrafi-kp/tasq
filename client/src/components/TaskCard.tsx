@@ -8,7 +8,7 @@ interface TaskCardProps {
   index: number;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const statusColors = {
     'pending': 'bg-gray-100 text-gray-700',
     'in-progress': 'bg-blue-100 text-blue-700',
@@ -93,3 +93,5 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
     </div>
   );
 };
+
+export default TaskCard;

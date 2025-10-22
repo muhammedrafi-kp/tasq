@@ -6,7 +6,7 @@ interface CardProps {
   hover?: boolean;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', hover = false }) => {
+const Card: React.FC<CardProps> = ({ children, className = '', hover = false }) => {
   return (
     <div
       className={`card ${hover ? 'hover:shadow-md' : ''} ${className}`}
@@ -15,3 +15,5 @@ export const Card: React.FC<CardProps> = ({ children, className = '', hover = fa
     </div>
   );
 };
+
+export default Card;

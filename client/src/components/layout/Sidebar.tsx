@@ -13,7 +13,7 @@ const menuItems = [
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 
-export const Sidebar: React.FC = () => {
+const Sidebar: React.FC = () => {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -82,3 +82,5 @@ export const Sidebar: React.FC = () => {
     </aside>
   );
 };
+
+export default Sidebar;

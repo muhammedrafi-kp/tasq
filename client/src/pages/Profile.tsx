@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { User, Mail, Edit2, Save, Loader2 } from 'lucide-react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
 import type { IUser, ValidationErrors } from '../types/index';
 import { getUser,updateUser } from "../services/userService";
 import { setUser as setAuthUser } from '../redux/authSlice';
 
-export const Profile: React.FC = () => {
+const Profile: React.FC = () => {
   const dispatch = useDispatch();
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -309,3 +309,5 @@ export const Profile: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default Profile;

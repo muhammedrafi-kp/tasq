@@ -5,7 +5,7 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
   options: { value: string; label: string }[];
 }
 
-export const Select: React.FC<SelectProps> = ({ label, options, className = '', ...props }) => {
+const Select: React.FC<SelectProps> = ({ label, options, className = '', ...props }) => {
   return (
     <div className="w-full">
       {label && (
@@ -26,3 +26,5 @@ export const Select: React.FC<SelectProps> = ({ label, options, className = '', 
     </div>
   );
 };
+
+export default Select;

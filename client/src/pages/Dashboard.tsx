@@ -1,17 +1,17 @@
 import React, { useState,useEffect } from 'react';
 import { ListTodo, CheckCircle2, Clock, TrendingUp, Loader2 } from 'lucide-react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { StatCard } from '../components/StateCard';
-import { Card } from '../components/ui/Card';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import StatCard from '../components/StateCard';
+import Card from '../components/ui/Card';
 // import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 import type{ApiResponse, ITask} from "../types/index";
 import { getDashboardTasksStats,getTasks } from '../services/taskService';
-import { Button } from '../components/ui/Button';
+import Button from '../components/ui/Button';
 
 
 
-export const Dashboard: React.FC = () => {
+const Dashboard: React.FC = () => {
   // const { tasks } = useApp();
   const [recentTasks, setRecentTasks] = useState<ITask[]>([])
   const [stats, setStats] = useState<{ total: number, pending: number, inProgress: number, completed: number }>({ total: 0, pending: 0, inProgress: 0, completed: 0 })
@@ -193,3 +193,5 @@ export const Dashboard: React.FC = () => {
     </DashboardLayout>
   );
 }
+
+export default Dashboard;

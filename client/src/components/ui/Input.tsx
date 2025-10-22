@@ -8,7 +8,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   onTogglePassword?: () => void;
 }
 
-export const Input: React.FC<InputProps> = ({ 
+const Input: React.FC<InputProps> = ({ 
   label, 
   error, 
   className = '', 
@@ -52,3 +52,5 @@ export const Input: React.FC<InputProps> = ({
     </div>
   );
 };
+
+export default Input;

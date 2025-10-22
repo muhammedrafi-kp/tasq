@@ -28,7 +28,7 @@ interface FileAttachmentProps {
   onRemoveExistingAttachment?: (attachmentId: string) => void; // Callback to remove existing attachment
 }
 
-export const FileAttachment: React.FC<FileAttachmentProps> = ({
+const FileAttachment: React.FC<FileAttachmentProps> = ({
   files,
   onFilesChange,
   maxFiles = 5,
@@ -420,3 +420,5 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
     </div>
   );
 };
+
+export default FileAttachment;

@@ -1,11 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Search, Plus, Filter, Loader2, ListTodo, X } from 'lucide-react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { TaskCard } from '../components/TaskCard';
-import { Pagination } from '../components/Pagination';
-import { Input } from '../components/ui/Input';
-import { Button } from '../components/ui/Button';
-import { Select } from '../components/ui/Select';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import TaskCard from '../components/TaskCard';
+import Pagination from '../components/Pagination';
+import Input from '../components/ui/Input';
+import Button from '../components/ui/Button';
+import Select from '../components/ui/Select';
 // import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '../hooks/useDebounce';
@@ -14,7 +14,7 @@ import { getTasks } from "../services/taskService"
 
 
 
-export const TaskList: React.FC = () => {
+const TaskList: React.FC = () => {
   // const { tasks } = useApp();
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -264,3 +264,5 @@ export const TaskList: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default TaskList;

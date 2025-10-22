@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card } from '../components/ui/Card';
-import { Input } from '../components/ui/Input';
-import { Select } from '../components/ui/Select';
-import { Button } from '../components/ui/Button';
-import { FileAttachment } from '../components/FileAttachment';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import Card from '../components/ui/Card';
+import Input from '../components/ui/Input';
+import Select from '../components/ui/Select';
+import Button from '../components/ui/Button';
+import FileAttachment from '../components/FileAttachment';
 import type { ITask, TaskStatus, TaskPriority } from '../types/index';
 import { addTask, getTask,updateTask } from "../services/taskService";
 import toast from 'react-hot-toast';
@@ -20,7 +20,7 @@ interface AttachedFile {
 }
 
 
-export const TaskForm: React.FC = () => {
+const TaskForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [task, setTask] = useState<ITask | null>(null);
   const navigate = useNavigate();
@@ -476,3 +476,5 @@ export const TaskForm: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default TaskForm;

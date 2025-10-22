@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Calendar, User, Clock, Edit, Trash2, CheckCircle2, Loader2, Download, Eye, MessageCircle, Paperclip, X } from 'lucide-react';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { Card } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { ConfirmationModal } from '../components/ui/ConfirmationModal';
+import DashboardLayout from '../components/layout/DashboardLayout';
+import Card from '../components/ui/Card';
+import Button from '../components/ui/Button';
+import ConfirmationModal from '../components/ui/ConfirmationModal';
 // import { useApp } from '../context/AppContext';
 import type { ITask } from '../types/index';
 import { getTask, markTaskAsComplete, deleteTask } from "../services/taskService";
 import { toast } from 'react-hot-toast';
 
 
-export const TaskDetail: React.FC = () => {
+const TaskDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [task, setTask] = useState<ITask | null>(null);
@@ -433,3 +433,5 @@ export const TaskDetail: React.FC = () => {
     </DashboardLayout>
   );
 };
+
+export default TaskDetail;

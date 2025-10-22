@@ -1,6 +1,6 @@
 import React from 'react';
 import { AlertTriangle, X } from 'lucide-react';
-import { Button } from './Button';
+import Button from './Button';
 
 interface ConfirmationModalProps {
   isOpen: boolean;
@@ -14,7 +14,7 @@ interface ConfirmationModalProps {
   isLoading?: boolean;
 }
 
-export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
+const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
@@ -120,3 +120,5 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
     </div>
   );
 };
+
+export default ConfirmationModal;

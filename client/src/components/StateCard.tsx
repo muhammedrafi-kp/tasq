@@ -1,6 +1,6 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
-import { Card } from './ui/Card';
+import Card from './ui/Card';
 
 interface StatCardProps {
   title: string;
@@ -11,7 +11,7 @@ interface StatCardProps {
   delay?: number;
 }
 
-export const StatCard: React.FC<StatCardProps> = ({
+const StatCard: React.FC<StatCardProps> = ({
   title,
   value,
   icon: Icon,
@@ -37,3 +37,5 @@ export const StatCard: React.FC<StatCardProps> = ({
     </div>
   );
 };
+
+export default StatCard;

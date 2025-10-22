@@ -1,19 +1,17 @@
 
-// import './App.css'
-import React from 'react';
+import React,{lazy} from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-// import { AppProvider, useApp } from './context/AppContext';
-import { Login } from './pages/Login';
-import { Register } from './pages/Register';
-import { Dashboard } from './pages/Dashboard';
-import { TaskList } from './pages/TaskList';
-import { TaskDetail } from './pages/TaskDetail';
-import { TaskForm } from './pages/TaskForm';
-import { Profile } from './pages/Profile';
-import { Analytics } from './pages/Analytics';
-
 import ProtectedRoute from './routes/ProtectedRoute';
 import PublicRoute from './routes/PublicRoute';
+
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const TaskList = lazy(() => import('./pages/TaskList'));
+const TaskDetail = lazy(() => import('./pages/TaskDetail'));
+const TaskForm = lazy(() => import('./pages/TaskForm'));
+const Profile = lazy(() => import('./pages/Profile'));
+const Analytics = lazy(() => import('./pages/Analytics'));
 
 const AppRoutes: React.FC = () => {
 
