@@ -114,7 +114,7 @@ export class TaskService {
                 sortOrder = 'desc'
             } = queryParams;
 
-            const filter: any = { userId, isDeleted: { $ne: true } };
+            const filter: any = {userId, isDeleted: { $ne: true } };
 
             if (search) {
                 filter.$or = [
