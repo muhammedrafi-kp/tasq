@@ -110,7 +110,7 @@ CLOUDINARY_API_SECRET=<your-cloudinary-api-secret>
 ### 1️⃣ Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/tasq.git
+git clone https://github.com/muhammedrafi-kp/tasq.git
 cd tasq
 ```
 
