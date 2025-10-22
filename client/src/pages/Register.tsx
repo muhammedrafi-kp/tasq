@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { UserPlus, AlertCircle, Loader2 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { setUser } from '../redux/authSlice';
-import { signupUser } from "../services/authService";
+import { signupUser, googleAuthCallback } from "../services/authService";
 import { validateRegisterForm } from '../validators/authValidation';
 import type { ValidationErrors } from '../types/index';
 
@@ -62,6 +63,38 @@ export const Register: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setIsLoading(true);
+    setApiError('');
+    setSuccessMessage('');
+
+    try {
+      const res = await googleAuthCallback(credentialResponse.credential);
+      if (res.success) {
+        dispatch(setUser({ user: res.data }));
+        setSuccessMessage('Google registration successful! Redirecting...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else {
+        setApiError(res.message || 'Google registration failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Google registration error:', error);
+      setApiError(
+        error?.response?.data?.message || 
+        error?.message || 
+        'Google authentication failed. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setApiError('Google authentication failed. Please try again.');
   };
 
   return (
@@ -143,6 +176,28 @@ export const Register: React.FC = () => {
             )}
           </Button>
         </form>
+
+        {/* Divider */}
+        <div className="auth-divider">
+          <div className="auth-divider-line"></div>
+          <span className="auth-divider-text">or</span>
+          <div className="auth-divider-line"></div>
+        </div>
+
+        {/* Google Login Button */}
+        <div className="auth-google-container">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            useOneTap={false}
+            theme="outline"
+            size="large"
+            width="100%"
+            text="continue_with"
+            shape="rectangular"
+            logo_alignment="left"
+          />
+        </div>
 
         <div className="auth-footer">
           <p style={{ fontSize: '14px', color: '#6b7280' }}>

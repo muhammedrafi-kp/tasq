@@ -8,7 +8,7 @@ import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
 import { FileAttachment } from '../components/FileAttachment';
 import type { ITask, TaskStatus, TaskPriority } from '../types/index';
-import { addTask, getTask } from "../services/taskService";
+import { addTask, getTask,updateTask } from "../services/taskService";
 import toast from 'react-hot-toast';
 
 interface AttachedFile {
@@ -37,7 +37,7 @@ export const TaskForm: React.FC = () => {
         description: task.description,
         status: task.status,
         priority: task.priority,
-        dueDate: task.dueDate,
+        dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
         assignedTo: task.assignedTo?.map(assignee => assignee.email) || [],
       };
     }
@@ -55,6 +55,7 @@ export const TaskForm: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
   const [currentEmail, setCurrentEmail] = useState('');
+  const [removedFiles, setRemovedFiles] = useState<string[]>([]);
 
   console.log('Task form data:', taskFormData);
   // Fetch task data when editing
@@ -68,8 +69,10 @@ export const TaskForm: React.FC = () => {
           const response = await getTask(id);
           if (response.success && response.data) {
             // Update the tasks state with the fetched task
+            console.log('Fetched task:', response.data);
             setTask(response.data);
           } else {
+            console.error('Failed to fetch task data:', response.message);
             setFetchError('Failed to fetch task data');
           }
         } catch (error) {
@@ -131,21 +134,57 @@ export const TaskForm: React.FC = () => {
 
     try {
       if (isEditing && task) {
-        // Update existing task
-        // const updatedTask: ITask = {
-        //   ...task,
-        //   ...formData,
-        //   updatedAt: new Date().toISOString().split('T')[0],
-        // };
+        
+        const formData = new FormData();
+        formData.append('title', taskFormData.title);
+        formData.append('description', taskFormData.description);
+        formData.append('status', taskFormData.status);
+        formData.append('priority', taskFormData.priority);
+        formData.append('dueDate', taskFormData.dueDate);
+        taskFormData.assignedTo.forEach(email => {
+          formData.append('assignedTo[]', email);
+        });
+        
+        // Add new files
+        attachedFiles.forEach(file => {
+          formData.append('newFiles', file.file, file.name);
+        });
+        
+        // Add existing files (those not removed)
+        const existingFiles = task?.attachments?.filter(attachment => 
+          !removedFiles.includes(attachment.filename)
+        ) || [];
+        existingFiles.forEach(attachment => {
+          formData.append('existingFiles[]', JSON.stringify({
+            filename: attachment.filename,
+            url: attachment.url
+          }));
+        });
+        
+        // Add removed files
+        removedFiles.forEach(filename => {
+          formData.append('removedFiles', filename);
+        });
+       
 
+        console.log('Form data for update:');
+        console.log('- New files:', attachedFiles.map(f => f.name));
+        console.log('- Existing files:', existingFiles.map(f => f.filename));
+        console.log('- Removed files:', removedFiles);
+        console.log('- Form data entries:', Array.from(formData.entries()));
 
-
-        // console.log('Task updated:', updatedTask);
-        console.log('Attached files:', attachedFiles);
-      } else {
+        const res = await updateTask(id, formData);
+        console.log('Response:', res);
+        if (res.success) {
+          console.log('Task updated successfully');
+          toast.success('Task updated');
+          navigate(`/tasks/${id}`);
+        } else {
+          console.log('Failed to update task');
+          toast.error('Failed to update task');
+        }
+      } else {  
         // Create new task
-
-
         const formData = new FormData();
         formData.append('title', taskFormData.title);
         formData.append('description', taskFormData.description);
@@ -169,6 +208,7 @@ export const TaskForm: React.FC = () => {
         if (res.success) {
           console.log('Task created successfully');
           toast.success('New task created');
+          navigate(`/tasks`);
         } else {
           console.log('Failed to create task');
           toast.error('Failed to create task');
@@ -217,11 +257,21 @@ export const TaskForm: React.FC = () => {
     }));
   };
 
+  const handleRemoveExistingAttachment = (attachmentId: string) => {
+    // Extract the actual filename from the attachmentId (which is "existing-{index}")
+    const attachmentIndex = parseInt(attachmentId.replace('existing-', ''));
+    const attachment = task?.attachments?.[attachmentIndex];
+    
+    if (attachment) {
+      setRemovedFiles(prev => [...prev, attachment.filename]);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="task-form-container">
         <div className="task-form-header">
-          <Link to="/tasks">
+          <Link to={`/tasks/${id}`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
               {/* Back */}
@@ -392,6 +442,10 @@ export const TaskForm: React.FC = () => {
                     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
                     'application/msword'
                   ]}
+                  existingAttachments={task?.attachments?.filter(attachment => 
+                    !removedFiles.includes(attachment.filename)
+                  ) || []}
+                  onRemoveExistingAttachment={handleRemoveExistingAttachment}
                 />
               </div>
 
@@ -409,7 +463,7 @@ export const TaskForm: React.FC = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => navigate('/tasks')}
+                  onClick={() => navigate(-1)}
                   disabled={isLoading}
                 >
                   Cancel

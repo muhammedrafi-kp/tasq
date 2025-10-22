@@ -1,86 +1,74 @@
-import React, { useState } from 'react';
-import { ListTodo, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
+import React, { useState,useEffect } from 'react';
+import { ListTodo, CheckCircle2, Clock, TrendingUp, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { StatCard } from '../components/StateCard';
 import { Card } from '../components/ui/Card';
 // import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
-import type{ITask} from "../types/index";
+import type{ApiResponse, ITask} from "../types/index";
+import { getDashboardTasksStats,getTasks } from '../services/taskService';
+import { Button } from '../components/ui/Button';
 
-const mockTasks: ITask[] = [
-  {
-    id: '1',
-    title: 'Design new landing page',
-    description: 'Create wireframes and mockups for the new landing page redesign',
-    status: 'in-progress',
-    priority: 'high',
-    dueDate: '2025-10-20',
-    assignedTo: 'John Doe',
-    createdAt: '2025-10-15',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '2',
-    title: 'Fix login bug',
-    description: 'Users are experiencing issues logging in with social accounts',
-    status: 'pending',
-    priority: 'high',
-    dueDate: '2025-10-18',
-    assignedTo: 'Jane Smith',
-    createdAt: '2025-10-14',
-    updatedAt: '2025-10-16',
-  },
-  {
-    id: '3',
-    title: 'Update documentation',
-    description: 'Add API documentation for the new endpoints',
-    status: 'completed',
-    priority: 'medium',
-    dueDate: '2025-10-15',
-    assignedTo: 'John Doe',
-    createdAt: '2025-10-10',
-    updatedAt: '2025-10-15',
-  },
-  {
-    id: '4',
-    title: 'Implement dark mode',
-    description: 'Add dark mode toggle and theme switching functionality',
-    status: 'in-progress',
-    priority: 'medium',
-    dueDate: '2025-10-22',
-    assignedTo: 'Mike Johnson',
-    createdAt: '2025-10-12',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '5',
-    title: 'Set up CI/CD pipeline',
-    description: 'Configure automated testing and deployment workflow',
-    status: 'pending',
-    priority: 'low',
-    dueDate: '2025-10-25',
-    assignedTo: 'Jane Smith',
-    createdAt: '2025-10-13',
-    updatedAt: '2025-10-14',
-  },
-];
+
 
 export const Dashboard: React.FC = () => {
   // const { tasks } = useApp();
-  const [tasks] = useState<ITask[]>(mockTasks)
+  const [recentTasks, setRecentTasks] = useState<ITask[]>([])
+  const [stats, setStats] = useState<{ total: number, pending: number, inProgress: number, completed: number }>({ total: 0, pending: 0, inProgress: 0, completed: 0 })
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const stats = {
-    total: tasks.length,
-    completed: tasks.filter(t => t.status === 'completed').length,
-    inProgress: tasks.filter(t => t.status === 'in-progress').length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-  };
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const [statsRes, tasksRes]: [ApiResponse<{ total: number, pending: number, inProgress: number, completed: number }>, ApiResponse<ITask[]>] = await Promise.all([
+          getDashboardTasksStats(),
+          getTasks({ page: 1, limit: 5, sortBy: 'createdAt', sortOrder: 'desc' })
+        ]);
 
-  const completionRate = stats.total > 0
-    ? Math.round((stats.completed / stats.total) * 100)
-    : 0;
+        if (statsRes.success && statsRes.data) setStats(statsRes.data);
+        else setError('Failed to fetch dashboard stats');
 
-  const recentTasks = tasks.slice(0, 5);
+        if (tasksRes.success && tasksRes.data) setRecentTasks(tasksRes.data);
+        else setError(prev => prev ?? 'Failed to fetch recent tasks');
+      } catch (e) {
+        setError('Failed to load dashboard data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const calculateCompletionRate = (total: number, completed: number) => {
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  }
+
+  const DashboardLoadingSpinner = () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
+        <p className="text-gray-600">Loading your dashboard...</p>
+      </div>
+    </div>
+  );
+
+  const DashboardErrorState = () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ListTodo className="w-8 h-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load dashboard</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -90,6 +78,12 @@ export const Dashboard: React.FC = () => {
           <p className="dashboard-subtitle">Welcome back! Here's your task overview.</p>
         </div>
 
+        {isLoading ? (
+          <DashboardLoadingSpinner />
+        ) : error ? (
+          <DashboardErrorState />
+        ) : (
+        <>
         <div className="stats-grid">
           <StatCard
             title="Total Tasks"
@@ -103,7 +97,7 @@ export const Dashboard: React.FC = () => {
             value={stats.completed}
             icon={CheckCircle2}
             color="bg-green-500"
-            trend={`${completionRate}% completion rate`}
+            // trend={`${calculateCompletionRate(stats.total, stats.completed)}% completion rate`}
             delay={0.2}
           />
           <StatCard
@@ -129,12 +123,12 @@ export const Dashboard: React.FC = () => {
               <div className="progress-item">
                 <div className="progress-label">
                   <span className="progress-label-text">Overall Progress</span>
-                  <span className="progress-label-value">{completionRate}%</span>
+                  <span className="progress-label-value">{calculateCompletionRate(stats.total, stats.completed)}%</span>
                 </div>
                 <div className="progress-bar-container">
                   <div
                     className="progress-bar progress-bar-blue"
-                    style={{ width: `${completionRate}%` }}
+                    style={{ width: `${calculateCompletionRate(stats.total, stats.completed)}%` }}
                   />
                 </div>
               </div>
@@ -181,7 +175,7 @@ export const Dashboard: React.FC = () => {
                     <div className="task-item-content">
                       <div className="task-item-info">
                         <h3 className="task-item-title">{task.title}</h3>
-                        <p className="task-item-assignee">{task.assignedTo}</p>
+                        {/* <p className="task-item-assignee">{task.assignees?.map((assignee: IAssignee) => assignee.name).join(', ')}</p> */}
                       </div>
                       <span className={`task-priority priority-${task.priority}`}>
                         {task.priority}
@@ -193,7 +187,9 @@ export const Dashboard: React.FC = () => {
             </Card>
           </div>
         </div>
+        </>
+        )}
       </div>
     </DashboardLayout>
   );
-};
+}

@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
-import { Upload, File, Image, FileText, X, AlertCircle, Eye } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Upload, File, Image, FileText, X, AlertCircle, Eye, ExternalLink } from 'lucide-react';
+import type { IAttachment } from '../types/index';
 
 interface AttachedFile {
   id: string;
@@ -9,12 +10,22 @@ interface AttachedFile {
   type: string;
 }
 
+interface ExistingAttachment {
+  id: string;
+  filename: string;
+  url: string;
+  type: string;
+  size?: number;
+}
+
 interface FileAttachmentProps {
   files: AttachedFile[];
   onFilesChange: (files: AttachedFile[]) => void;
   maxFiles?: number;
   maxSizePerFile?: number; // in MB
   acceptedTypes?: string[];
+  existingAttachments?: IAttachment[]; // For editing mode
+  onRemoveExistingAttachment?: (attachmentId: string) => void; // Callback to remove existing attachment
 }
 
 export const FileAttachment: React.FC<FileAttachmentProps> = ({
@@ -22,12 +33,46 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
   onFilesChange,
   maxFiles = 5,
   maxSizePerFile = 10, // 10MB default
-  acceptedTypes = ['image/*', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+  acceptedTypes = ['image/*', 'application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  existingAttachments = [],
+  onRemoveExistingAttachment
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string>('');
-  const [previewImage, setPreviewImage] = useState<AttachedFile | null>(null);
+  const [previewImage, setPreviewImage] = useState<AttachedFile | ExistingAttachment | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [existingAttachmentsList, setExistingAttachmentsList] = useState<ExistingAttachment[]>([]);
+
+  // Process existing attachments when they change
+  useEffect(() => {
+    const processedAttachments: ExistingAttachment[] = existingAttachments.map((attachment, index) => ({
+      id: `existing-${index}`,
+      filename: attachment.filename,
+      url: attachment.url,
+      type: getFileTypeFromUrl(attachment.url),
+      size: undefined // We don't have size info for existing attachments
+    }));
+    setExistingAttachmentsList(processedAttachments);
+  }, [existingAttachments]);
+
+  const getFileTypeFromUrl = (url: string): string => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'webp':
+        return 'image/*';
+      case 'pdf':
+        return 'application/pdf';
+      case 'doc':
+      case 'docx':
+        return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+      default:
+        return 'application/octet-stream';
+    }
+  };
 
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 Bytes';
@@ -76,9 +121,10 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
     const validFiles: AttachedFile[] = [];
     const errors: string[] = [];
 
-    // Check if adding these files would exceed the limit
-    if (files.length + fileArray.length > maxFiles) {
-      setError(`You can only attach up to ${maxFiles} files.`);
+    // Check if adding these files would exceed the limit (including existing attachments)
+    const totalCurrentFiles = files.length + existingAttachmentsList.length;
+    if (totalCurrentFiles + fileArray.length > maxFiles) {
+      setError(`You can only attach up to ${maxFiles} files. Currently have ${totalCurrentFiles} files.`);
       return;
     }
 
@@ -154,11 +200,11 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
     fileInputRef.current?.click();
   };
 
-  const isImageFile = (file: AttachedFile): boolean => {
+  const isImageFile = (file: AttachedFile | ExistingAttachment): boolean => {
     return file.type.startsWith('image/');
   };
 
-  const openImagePreview = (file: AttachedFile) => {
+  const openImagePreview = (file: AttachedFile | ExistingAttachment) => {
     if (isImageFile(file)) {
       setPreviewImage(file);
     }
@@ -166,6 +212,16 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
 
   const closeImagePreview = () => {
     setPreviewImage(null);
+  };
+
+  const removeExistingAttachment = (attachmentId: string) => {
+    if (onRemoveExistingAttachment) {
+      onRemoveExistingAttachment(attachmentId);
+    }
+  };
+
+  const openAttachmentInNewTab = (url: string) => {
+    window.open(url, '_blank');
   };
 
   const renderFileItem = (file: AttachedFile) => {
@@ -215,6 +271,62 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
     );
   };
 
+  const renderExistingAttachment = (attachment: ExistingAttachment) => {
+    const isImage = isImageFile(attachment);
+    
+    return (
+      <div key={attachment.id} className="file-item existing-attachment">
+        <div className={isImage ? "file-item-info-with-image" : "file-item-info"}>
+          {isImage ? (
+            <img
+              src={attachment.url}
+              alt={attachment.filename}
+              className="file-item-image"
+              onClick={() => openImagePreview(attachment)}
+              title="Click to preview"
+            />
+          ) : (
+            getFileIcon(attachment.type)
+          )}
+          <div className={isImage ? "file-details-with-image" : "file-details"}>
+            <div className="file-name">{attachment.filename}</div>
+            <div className="file-size">{attachment.size ? formatFileSize(attachment.size) : 'Existing file'}</div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {isImage && (
+            <button
+              type="button"
+              onClick={() => openImagePreview(attachment)}
+              className="file-remove"
+              title="Preview image"
+              style={{ color: '#2563eb' }}
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => openAttachmentInNewTab(attachment.url)}
+            className="file-remove"
+            title="Open in new tab"
+            style={{ color: '#059669' }}
+          >
+            <ExternalLink className="w-4 h-4" />
+          </button>
+          <button
+            type="button"
+            onClick={() => removeExistingAttachment(attachment.id)}
+            className="file-remove"
+            title="Remove attachment"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="file-attachment-container">
       <label className="file-attachment-label">
@@ -250,8 +362,11 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
         className="file-input"
       />
 
-      {files.length > 0 && (
+      {(files.length > 0 || existingAttachmentsList.length > 0) && (
         <div className="file-list">
+          {/* Render existing attachments first */}
+          {existingAttachmentsList.map((attachment) => renderExistingAttachment(attachment))}
+          {/* Then render new files */}
           {files.map((file) => renderFileItem(file))}
         </div>
       )}
@@ -272,23 +387,27 @@ export const FileAttachment: React.FC<FileAttachmentProps> = ({
             </div>
             <div className="image-preview-body">
               <img
-                src={URL.createObjectURL(previewImage.file)}
-                alt={previewImage.name}
+                src={'file' in previewImage ? URL.createObjectURL(previewImage.file) : previewImage.url}
+                alt={'file' in previewImage ? previewImage.name : previewImage.filename}
                 className="image-preview-img"
               />
               <div className="image-preview-info">
-                <div className="image-preview-filename">{previewImage.name}</div>
-                <div className="image-preview-size">{formatFileSize(previewImage.size)}</div>
+                <div className="image-preview-filename">
+                  {'file' in previewImage ? previewImage.name : previewImage.filename}
+                </div>
+                <div className="image-preview-size">
+                  {'file' in previewImage ? formatFileSize(previewImage.size) : 'Existing file'}
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {files.length >= maxFiles - 1 && files.length < maxFiles && (
+      {(files.length + existingAttachmentsList.length) >= maxFiles - 1 && (files.length + existingAttachmentsList.length) < maxFiles && (
         <div className="file-limit-warning">
           <AlertCircle className="w-4 h-4 inline mr-2" />
-          You can attach {maxFiles - files.length} more file{maxFiles - files.length === 1 ? '' : 's'}.
+          You can attach {maxFiles - (files.length + existingAttachmentsList.length)} more file{maxFiles - (files.length + existingAttachmentsList.length) === 1 ? '' : 's'}.
         </div>
       )}
 

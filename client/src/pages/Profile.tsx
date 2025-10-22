@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
 import { User, Mail, Edit2, Save, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-import type { IUser } from '../types/index';
-import { getUser } from "../services/userService";
-
+import type { IUser, ValidationErrors } from '../types/index';
+import { getUser,updateUser } from "../services/userService";
+import { setUser as setAuthUser } from '../redux/authSlice';
 
 export const Profile: React.FC = () => {
+  const dispatch = useDispatch();
   const [user, setUser] = useState<IUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -46,36 +49,85 @@ export const Profile: React.FC = () => {
     fetchUser();
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // updateUser(formData);
-    // setUser({ ...user, ...formData });
-    setIsEditing(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // Validation function for name
+  const validateName = (name: string): string | null => {
+    if (!name.trim()) {
+      return "Full name is required";
+    }
+    if (name.trim().length < 3 || name.trim().length > 15) {
+      return "Name must be between 3 and 15 characters";
+    }
+    if (/^_+$/.test(name.trim())) {
+      return "Name cannot be only underscores";
+    }
+    if (/^\d+$/.test(name.trim())) {
+      return "Name cannot be only numbers";
+    }
+    return null;
   };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous validation errors
+    setValidationErrors({});
+    
+    // Validate name
+    const nameError = validateName(formData.name);
+    if (nameError) {
+      setValidationErrors({ name: nameError });
+      return;
+    }
+    
+    try {
+      setIsUpdating(true);
+      setError(null);
+      const response = await updateUser(formData.name);
+      if (response.success && response.data) {
+        setUser(response.data);
+        dispatch(setAuthUser({ user: response.data }));
+        setIsEditing(false);
+      } else {
+        setError('Failed to update user');
+      }
+    } catch (err) {
+      console.error('Error updating user:', err);
+      setError('Failed to update user');
+    } finally {
+      setIsUpdating(false);
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear validation error for the field being changed
+    if (validationErrors[name as keyof ValidationErrors]) {
+      setValidationErrors(prev => ({ ...prev, [name]: undefined }));
+    }
   };
 
-  // Loading animation component
-  const LoadingSpinner = () => (
-    <div className="flex items-center justify-center min-h-[400px]">
+  // Loading animation component for user details card only
+  const UserDetailsLoadingSpinner = () => (
+    <div className="flex items-center justify-center py-12">
       <div className="text-center">
         <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
-        <p className="text-gray-600">Loading your profile...</p>
+        <p className="text-gray-600">Loading your details...</p>
       </div>
     </div>
   );
 
-  // Error state component
-  const ErrorState = () => (
-    <div className="flex items-center justify-center min-h-[400px]">
+  // Error state component for user details card only
+  const UserDetailsErrorState = () => (
+    <div className="flex items-center justify-center py-12">
       <div className="text-center">
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <User className="w-8 h-8 text-red-600" />
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load profile</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load details</h3>
         <p className="text-gray-600 mb-4">{error}</p>
         <Button onClick={() => window.location.reload()} variant="outline">
           Try Again
@@ -83,24 +135,6 @@ export const Profile: React.FC = () => {
       </div>
     </div>
   );
-
-  if (isLoading) {
-    return (
-      <DashboardLayout>
-        <LoadingSpinner />
-      </DashboardLayout>
-    );
-  }
-
-  if (error && !user) {
-    return (
-      <DashboardLayout>
-        <ErrorState />
-      </DashboardLayout>
-    );
-  }
-
-  if (!user) return null;
 
   return (
     <DashboardLayout>
@@ -112,7 +146,7 @@ export const Profile: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
             <p className="text-gray-600 mt-2">Manage your account settings</p>
           </div>
-          {!isEditing && (
+          {!isEditing && user && (
             <Button onClick={() => setIsEditing(true)} variant="outline">
               <Edit2 className="w-4 h-4 mr-2" />
               {/* Edit Profile */}
@@ -127,7 +161,7 @@ export const Profile: React.FC = () => {
                 <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center mx-auto border-4 border-gray-100 shadow-lg">
                   <User className="w-14 h-14 text-gray-600" />
                 </div>
-                <h2 className="text-xl font-bold text-gray-900 mt-4">{user.name}</h2>
+                <h2 className="text-xl font-bold text-gray-900 mt-4">{user?.name}</h2>
                 {/* <p className="text-gray-600 mt-1">{user.role}</p> */}
                 {/* <div className="mt-6 pt-6 border-t border-gray-200">
                   <Button variant="outline" className="w-full" size="sm">
@@ -142,7 +176,11 @@ export const Profile: React.FC = () => {
             <Card className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
 
-              {isEditing ? (
+              {isLoading ? (
+                <UserDetailsLoadingSpinner />
+              ) : error && !user ? (
+                <UserDetailsErrorState />
+              ) : isEditing ? (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <Input
                     name="name"
@@ -150,6 +188,8 @@ export const Profile: React.FC = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
+                    disabled={isUpdating}
+                    error={validationErrors.name}
                   />
 
                   <Input
@@ -159,6 +199,7 @@ export const Profile: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
+                    disabled={isUpdating}
                   />
 
                   {/* <Input
@@ -170,20 +211,28 @@ export const Profile: React.FC = () => {
                   /> */}
 
                   <div className="flex gap-3 pt-4">
-                    <Button type="submit">
-                      <Save className="w-4 h-4 mr-2" />
-                      {/* Save Changes */}
+                    <Button type="submit" disabled={isUpdating}>
+                      {isUpdating ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4 mr-2" />
+                      )}
+                      {isUpdating ? 'Saving...' : 'Save Changes'}
                     </Button>
                     <Button
                       type="button"
                       variant="outline"
                       onClick={() => {
                         setIsEditing(false);
-                        setFormData({
-                          name: user.name,
-                          email: user.email
-                        });
+                        setValidationErrors({});
+                        if (user) {
+                          setFormData({
+                            name: user.name,
+                            email: user.email
+                          });
+                        }
                       }}
+                      disabled={isUpdating}
                     >
                       Cancel
                     </Button>
@@ -197,7 +246,7 @@ export const Profile: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-500">Full Name</p>
-                      <p className="text-base font-semibold text-gray-900 mt-1">{user.name}</p>
+                      <p className="text-base font-semibold text-gray-900 mt-1">{user?.name}</p>
                     </div>
                   </div>
 
@@ -207,7 +256,7 @@ export const Profile: React.FC = () => {
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-500">Email Address</p>
-                      <p className="text-base font-semibold text-gray-900 mt-1">{user.email}</p>
+                      <p className="text-base font-semibold text-gray-900 mt-1">{user?.email}</p>
                     </div>
                   </div>
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Search, Plus, Filter, Loader2, ListTodo } from 'lucide-react';
+import { Search, Plus, Filter, Loader2, ListTodo, X } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { TaskCard } from '../components/TaskCard';
 import { Pagination } from '../components/Pagination';
@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 // import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { useDebounce } from '../hooks/useDebounce';
 import type { TaskStatus, TaskPriority, ITask, ApiResponse } from '../types/index';
 import { getTasks } from "../services/taskService"
 
@@ -30,15 +31,25 @@ export const TaskList: React.FC = () => {
     limit: number;
   } | null>(null);
 
+  // Debounce search query with 500ms delay
+  const debouncedSearchQuery = useDebounce(searchQuery.trim(), 500);
+  
+  // Track if search is being debounced (user is still typing)
+  const isTyping = searchQuery.trim() !== debouncedSearchQuery;
+  
+  // Track if we're currently fetching data
+  const [isFetching, setIsFetching] = useState(false);
+
   const fetchTasks = useCallback(async () => {
     try {
       setIsLoading(true);
+      setIsFetching(true);
       setError(null);
       
       const params = {
         page: currentPage,
         limit: 9,
-        search: searchQuery,
+        search: debouncedSearchQuery || undefined, // Only include search if not empty
         status: statusFilter !== 'all' ? statusFilter : undefined,
         priority: priorityFilter !== 'all' ? priorityFilter : undefined,
         sortBy: 'createdAt',
@@ -61,8 +72,9 @@ export const TaskList: React.FC = () => {
       setError('Failed to fetch tasks');
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
-  }, [currentPage, searchQuery, statusFilter, priorityFilter]);
+  }, [currentPage, debouncedSearchQuery, statusFilter, priorityFilter]);
 
   useEffect(() => {
     fetchTasks();
@@ -73,7 +85,7 @@ export const TaskList: React.FC = () => {
   };
 
   const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
+    setSearchQuery(value.trim());
     setCurrentPage(1); // Reset to first page when searching
   };
 
@@ -85,6 +97,17 @@ export const TaskList: React.FC = () => {
   const handlePriorityFilterChange = (value: TaskPriority | 'all') => {
     setPriorityFilter(value);
     setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Check if any filter is active
+  const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || priorityFilter !== 'all';
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('all');
+    setPriorityFilter('all');
+    setCurrentPage(1);
   };
 
   // Loading animation component for task list area only
@@ -133,14 +156,27 @@ export const TaskList: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="md:col-span-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                {isFetching ? (
+                  <Loader2 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
+                ) : (
+                  <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 ${isTyping ? 'text-blue-500' : 'text-gray-400'}`} />
+                )}
                 <Input
                   type="text"
                   placeholder="Search tasks..."
                   value={searchQuery}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="pl-10"
+                  className={`pl-10 ${isTyping ? 'border-blue-300' : ''}`}
                 />
+                {isTyping && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="flex space-x-1">
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-1 h-1 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -167,15 +203,29 @@ export const TaskList: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
-            <Filter className="w-4 h-4" />
-            <span>
-              {pagination ? (
-                `Showing ${((pagination.currentPage - 1) * pagination.limit) + 1} to ${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount} tasks`
-              ) : (
-                `Showing ${tasks.length} tasks`
-              )}
-            </span>
+          <div className="flex items-center justify-between mt-4">
+            <div className="flex items-center gap-2 text-sm text-gray-600">
+              <Filter className="w-4 h-4" />
+              <span>
+                {pagination ? (
+                  `Showing ${((pagination.currentPage - 1) * pagination.limit) + 1} to ${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount} tasks`
+                ) : (
+                  `Showing ${tasks.length} tasks`
+                )}
+              </span>
+            </div>
+            
+            {hasActiveFilters && (
+              <Button
+                onClick={handleResetFilters}
+                variant="outline"
+                size="sm"
+                className="flex items-center gap-2 text-gray-600 hover:text-gray-900"
+              >
+                <X className="w-4 h-4" />
+                Reset Filters
+              </Button>
+            )}
           </div>
         </div>
 
@@ -185,7 +235,9 @@ export const TaskList: React.FC = () => {
           <TaskListErrorState />
         ) : tasks.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500 text-lg">No tasks found matching your filters</p>
+            <p className="text-gray-500 text-lg">
+              {searchQuery.trim() ? 'No tasks found matching your search' : 'No tasks found matching your filters'}
+            </p>
           </div>
         ) : (
           <>

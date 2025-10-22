@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
-import { AuthProvider } from "./context/AuthProvider.tsx"
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import store from './redux/store.ts';
 import './index.css'
 import App from './App.tsx';
@@ -10,10 +10,10 @@ import  {Toaster} from "react-hot-toast";
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
-      <Toaster />
-      <AuthProvider>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || ''}>
+        <Toaster />
         <App />
-      </AuthProvider>
+      </GoogleOAuthProvider>
     </Provider>
   </StrictMode>,
 )

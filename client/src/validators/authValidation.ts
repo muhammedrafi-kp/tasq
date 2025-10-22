@@ -7,12 +7,12 @@ export const validateForm = (data: FormData, isSignup: boolean = false): Validat
   if (isSignup) {
     if (!data.name || data.name.trim() === '') {
       errors.name = 'Full name is required';
-    } else if (data.name.trim().length < 2) {
-      errors.name = 'Full name must be at least 2 characters long';
-    } else if (data.name.trim().length > 50) {
-      errors.name = 'Full name must be less than 50 characters';
-    } else if (!/^[a-zA-Z\s]+$/.test(data.name.trim())) {
-      errors.name = 'Full name can only contain letters and spaces';
+    } else if (data.name.trim().length < 3 || data.name.trim().length > 15) {
+      errors.name = 'Name must be between 3 and 15 characters';
+    } else if (/^_+$/.test(data.name.trim())) {
+      errors.name = 'Name cannot be only underscores';
+    } else if (/^\d+$/.test(data.name.trim())) {
+      errors.name = 'Name cannot be only numbers';
     }
   }
 
