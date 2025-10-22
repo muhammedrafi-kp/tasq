@@ -15,9 +15,9 @@ export class UserController {
             if (!userId) {
                 return res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: HTTP_MESSAGE.TASK_ID_REQUIRED });
             }
-            const task = await this._userService.getUser(userId);
+            const user = await this._userService.getUser(userId);
             console.log("recieved userId : ", userId);
-            res.status(HTTP_STATUS.OK).json({ success: true, message: HTTP_MESSAGE.OK, data: task });
+            res.status(HTTP_STATUS.OK).json({ success: true, message: HTTP_MESSAGE.OK, data: user });
         } catch (error: unknown) {
             if (error instanceof HttpError) {
                 console.info(`HTTP Error: ${error.status} - ${error.message}`);

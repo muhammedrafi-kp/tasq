@@ -3,6 +3,8 @@ import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { setupSwagger } from "./swagger";
+
 
 import connectDB from "./configs/db";
 import authRouter from "./routes/auth.routes";
@@ -13,6 +15,8 @@ configDotenv();
 connectDB();
 
 const app = express();
+
+setupSwagger(app);
 
 app.use(cors({
     origin: process.env.FRONTEND_URL,
