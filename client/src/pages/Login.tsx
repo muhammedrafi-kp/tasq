@@ -1,83 +1,135 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-// import { useApp } from '../context/AppContext';
+import { setUser } from '../redux/authSlice';
+import { loginUser } from "../services/authService";
+import { validateLoginForm } from '../validators/authValidation';
+import type { ValidationErrors } from '../types/index';
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  // const { login } = useApp();
+  const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // login(email, password);
-    navigate('/dashboard');
+    
+    // Clear previous errors and messages
+    setErrors({});
+    setApiError('');
+    setSuccessMessage('');
+    
+    // Validate form
+    const validationErrors = validateLoginForm({ email, password });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      const res = await loginUser({ email, password });
+      if (res.success) {
+        dispatch(setUser({ user: res.data }));
+        setSuccessMessage('Login successful! Redirecting...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else {
+        setApiError(res.message || 'Login failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Login error:', error);
+      setApiError(
+        error?.response?.data?.message || 
+        error?.message || 
+        'An unexpected error occurred. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4"
-          >
-            <CheckCircle2 className="w-8 h-8 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-icon">
+            <CheckCircle2 className="w-8 h-8" style={{ color: 'white' }} />
+          </div>
+          <h1 className="auth-title">Welcome Back</h1>
+          <p className="auth-subtitle">Sign in to your account</p>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-8"
-        >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              type="email"
-              label="Email"
-              placeholder="john@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <Input
-              type="password"
-              label="Password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <Button type="submit" className="w-full">
-              Sign In
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <Link to="/register" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign up
-              </Link>
-            </p>
+        {/* API Error Message */}
+        {apiError && (
+          <div className="auth-message error">
+            <AlertCircle className="w-5 h-5" />
+            <span>{apiError}</span>
           </div>
-        </motion.div>
-      </motion.div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="auth-message success">
+            <CheckCircle2 className="w-5 h-5" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <Input
+            type="email"
+            label="Email"
+            placeholder="john@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+          />
+
+          <Input
+            type="password"
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Signing In...
+              </>
+            ) : (
+              'Sign In'
+            )}
+          </Button>
+        </form>
+
+        <div className="auth-footer">
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>
+            Don't have an account?{' '}
+            <Link to="/register" className="auth-link">
+              Sign up
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

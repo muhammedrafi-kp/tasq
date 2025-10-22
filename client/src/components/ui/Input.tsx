@@ -1,25 +1,54 @@
 import React from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  showPassword?: boolean;
+  onTogglePassword?: () => void;
 }
 
-export const Input: React.FC<InputProps> = ({ label, error, className = '', ...props }) => {
+export const Input: React.FC<InputProps> = ({ 
+  label, 
+  error, 
+  className = '', 
+  showPassword, 
+  onTogglePassword, 
+  type, 
+  ...props 
+}) => {
+  const isPasswordField = type === 'password';
+  
   return (
-    <div className="w-full">
+    <div className="input-container">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="input-label">
           {label}
         </label>
       )}
-      <input
-        className={`w-full px-4 py-2 border border-gray-300 rounded-lg transition-all duration-200 ${
-          error ? 'border-red-500' : ''
-        } ${className}`}
-        {...props}
-      />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+      <div className="input-wrapper">
+        <input
+          type={isPasswordField && showPassword ? 'text' : type}
+          className={`input-field ${
+            error ? 'error' : ''
+          } ${isPasswordField ? 'password' : ''} ${className}`}
+          {...props}
+        />
+        {isPasswordField && onTogglePassword && (
+          <button
+            type="button"
+            onClick={onTogglePassword}
+            className="password-toggle"
+          >
+            {showPassword ? (
+              <EyeOff className="w-5 h-5" />
+            ) : (
+              <Eye className="w-5 h-5" />
+            )}
+          </button>
+        )}
+      </div>
+      {error && <p className="input-error">{error}</p>}
     </div>
   );
 };

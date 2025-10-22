@@ -1,239 +1,424 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { ArrowLeft, Save } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Select } from '../components/ui/Select';
 import { Button } from '../components/ui/Button';
-// import { useApp } from '../context/AppContext';
-import type {IUser,Task, TaskStatus, TaskPriority } from '../types/index';
+import { FileAttachment } from '../components/FileAttachment';
+import type { ITask, TaskStatus, TaskPriority } from '../types/index';
+import { addTask, getTask } from "../services/taskService";
+import toast from 'react-hot-toast';
 
-const mockUser: IUser = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
-  // role: 'Product Manager',
-};
+interface AttachedFile {
+  id: string;
+  file: File;
+  name: string;
+  size: number;
+  type: string;
+}
 
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Design new landing page',
-    description: 'Create wireframes and mockups for the new landing page redesign',
-    status: 'in-progress',
-    priority: 'high',
-    dueDate: '2025-10-20',
-    assignee: 'John Doe',
-    createdAt: '2025-10-15',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '2',
-    title: 'Fix login bug',
-    description: 'Users are experiencing issues logging in with social accounts',
-    status: 'todo',
-    priority: 'high',
-    dueDate: '2025-10-18',
-    assignee: 'Jane Smith',
-    createdAt: '2025-10-14',
-    updatedAt: '2025-10-16',
-  },
-  {
-    id: '3',
-    title: 'Update documentation',
-    description: 'Add API documentation for the new endpoints',
-    status: 'completed',
-    priority: 'medium',
-    dueDate: '2025-10-15',
-    assignee: 'John Doe',
-    createdAt: '2025-10-10',
-    updatedAt: '2025-10-15',
-  },
-  {
-    id: '4',
-    title: 'Implement dark mode',
-    description: 'Add dark mode toggle and theme switching functionality',
-    status: 'in-progress',
-    priority: 'medium',
-    dueDate: '2025-10-22',
-    assignee: 'Mike Johnson',
-    createdAt: '2025-10-12',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '5',
-    title: 'Set up CI/CD pipeline',
-    description: 'Configure automated testing and deployment workflow',
-    status: 'todo',
-    priority: 'low',
-    dueDate: '2025-10-25',
-    assignee: 'Jane Smith',
-    createdAt: '2025-10-13',
-    updatedAt: '2025-10-14',
-  },
-];
 
 export const TaskForm: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [task, setTask] = useState<ITask | null>(null);
   const navigate = useNavigate();
-  // const { tasks, addTask, updateTask, user } = useApp();
-  const [user,setUser] = useState<IUser>(mockUser);
-  const [tasks,setTasks] = useState<Task[]>(mockTasks)
-  
-  const isEditing = id !== 'new';
-  const existingTask = isEditing ? tasks.find(t => t.id === id) : null;
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingTask, setIsFetchingTask] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    status: 'todo' as TaskStatus,
-    priority: 'medium' as TaskPriority,
-    dueDate: '',
-    assignee: user?.name || '',
-  });
+  const isEditing = id !== 'new' && id !== undefined;
+  // Initialize form data based on mode
+  const getInitialFormData = () => {
+    if (isEditing && task) {
+      return {
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+        dueDate: task.dueDate,
+        assignedTo: task.assignedTo?.map(assignee => assignee.email) || [],
+      };
+    }
+    return {
+      title: '',
+      description: '',
+      status: 'pending' as TaskStatus, // New tasks always start as 'pending'
+      priority: 'medium' as TaskPriority,
+      dueDate: '',
+      assignedTo: [],
+    };
+  };
+
+  const [taskFormData, setTaskFormData] = useState(getInitialFormData);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [attachedFiles, setAttachedFiles] = useState<AttachedFile[]>([]);
+  const [currentEmail, setCurrentEmail] = useState('');
+
+  console.log('Task form data:', taskFormData);
+  // Fetch task data when editing
+  useEffect(() => {
+    const fetchTaskData = async () => {
+      if (isEditing && id) {
+        setIsFetchingTask(true);
+        setFetchError(null);
+
+        try {
+          const response = await getTask(id);
+          if (response.success && response.data) {
+            // Update the tasks state with the fetched task
+            setTask(response.data);
+          } else {
+            setFetchError('Failed to fetch task data');
+          }
+        } catch (error) {
+          console.error('Error fetching task:', error);
+          setFetchError('Error loading task data');
+        } finally {
+          setIsFetchingTask(false);
+        }
+      }
+    };
+
+    fetchTaskData();
+  }, [isEditing, id]);
 
   useEffect(() => {
-    if (existingTask) {
-      setFormData({
-        title: existingTask.title,
-        description: existingTask.description,
-        status: existingTask.status,
-        priority: existingTask.priority,
-        dueDate: existingTask.dueDate,
-        assignee: existingTask.assignee,
-      });
-    }
-  }, [existingTask]);
+    setTaskFormData(getInitialFormData());
+    setErrors({}); // Clear errors when switching between add/edit modes
+  }, [id, task]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!taskFormData.title.trim()) {
+      newErrors.title = 'Title is required';
+    }
+
+    // if (!formData.description.trim()) {
+    //   newErrors.description = 'Description is required';
+    // }
+
+    if (!taskFormData.dueDate) {
+      newErrors.dueDate = 'Due date is required';
+    } else {
+      const dueDate = new Date(taskFormData.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      if (dueDate < today) {
+        newErrors.dueDate = 'Due date cannot be in the past';
+      }
+    }
+
+    // if (!formData.assignedTo.trim()) {
+    //   newErrors.assignedTo = 'assignedTo is required';
+    // }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (isEditing && existingTask) {
-      // updateTask(existingTask.id, formData);
-    } else {
-      // addTask(formData);
+    if (!validateForm()) {
+      return;
     }
 
-    navigate('/tasks');
+    setIsLoading(true);
+
+    try {
+      if (isEditing && task) {
+        // Update existing task
+        // const updatedTask: ITask = {
+        //   ...task,
+        //   ...formData,
+        //   updatedAt: new Date().toISOString().split('T')[0],
+        // };
+
+
+
+        // console.log('Task updated:', updatedTask);
+        console.log('Attached files:', attachedFiles);
+      } else {
+        // Create new task
+
+
+        const formData = new FormData();
+        formData.append('title', taskFormData.title);
+        formData.append('description', taskFormData.description);
+        formData.append('status', taskFormData.status);
+        formData.append('priority', taskFormData.priority);
+        formData.append('dueDate', taskFormData.dueDate);
+        // Always send assignedTo as individual fields to ensure it's always an array
+        taskFormData.assignedTo.forEach(email => {
+          formData.append('assignedTo[]', email);
+        });
+        attachedFiles.forEach(file => {
+          formData.append('files', file.file, file.name);
+        });
+
+        console.log('Task form data:', taskFormData);
+        console.log('Attached files:', attachedFiles);
+        console.log('Form data:', formData);
+
+        const res = await addTask(formData);
+        console.log('Response:', res);
+        if (res.success) {
+          console.log('Task created successfully');
+          toast.success('New task created');
+        } else {
+          console.log('Failed to create task');
+          toast.error('Failed to create task');
+        }
+      }
+
+
+
+      // Navigate back to tasks list
+      // navigate('/tasks');
+    } catch (error) {
+      console.error('Error saving task:', error);
+      toast.error('Error saving task');
+      // You can add toast notification here
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setTaskFormData(prev => ({ ...prev, [name]: value }));
+
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleAddEmail = () => {
+    if (currentEmail.trim() && currentEmail.includes('@')) {
+      setTaskFormData(prev => ({
+        ...prev,
+        assignedTo: [...prev.assignedTo, currentEmail.trim()]
+      }));
+      setCurrentEmail('');
+    }
+  };
+
+  const handleRemoveEmail = (index: number) => {
+    setTaskFormData(prev => ({
+      ...prev,
+      assignedTo: prev.assignedTo.filter((_, i) => i !== index)
+    }));
   };
 
   return (
     <DashboardLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl mx-auto space-y-6"
-      >
-        <div className="flex items-center gap-4">
+      <div className="task-form-container">
+        <div className="task-form-header">
           <Link to="/tasks">
             <Button variant="outline" size="sm">
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {/* Back */}
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">
+          <h1 className="task-form-title">
             {isEditing ? 'Edit Task' : 'Create New Task'}
           </h1>
         </div>
 
-        <Card className="p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              name="title"
-              label="Task Title"
-              placeholder="Enter task title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-            />
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Description
-              </label>
-              <textarea
-                name="description"
-                placeholder="Enter task description"
-                value={formData.description}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
-                required
-              />
+        <Card className="task-form-card">
+          {isFetchingTask ? (
+            <div className="task-form-loading">
+              <div className="task-form-loading-content">
+                <div className="task-form-spinner"></div>
+                <p style={{ color: '#6b7280' }}>Loading task data...</p>
+              </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Select
-                name="status"
-                label="Status"
-                value={formData.status}
-                onChange={handleChange}
-                options={[
-                  { value: 'todo', label: 'To Do' },
-                  { value: 'in-progress', label: 'In Progress' },
-                  { value: 'completed', label: 'Completed' },
-                ]}
-              />
-
-              <Select
-                name="priority"
-                label="Priority"
-                value={formData.priority}
-                onChange={handleChange}
-                options={[
-                  { value: 'low', label: 'Low' },
-                  { value: 'medium', label: 'Medium' },
-                  { value: 'high', label: 'High' },
-                ]}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                name="dueDate"
-                type="date"
-                label="Due Date"
-                value={formData.dueDate}
-                onChange={handleChange}
-                required
-              />
-
-              <Input
-                name="assignee"
-                label="Assignee"
-                placeholder="Enter assignee name"
-                value={formData.assignee}
-                onChange={handleChange}
-                required
-              />
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button type="submit" className="flex-1">
-                <Save className="w-4 h-4 mr-2" />
-                {isEditing ? 'Update Task' : 'Create Task'}
-              </Button>
+          ) : fetchError ? (
+            <div className="task-form-error">
+              <div className="task-form-error-content">
+                <p className="task-form-error-title">Error loading task</p>
+                <p className="task-form-error-message">{fetchError}</p>
+              </div>
               <Button
-                type="button"
+                onClick={() => window.location.reload()}
                 variant="outline"
-                onClick={() => navigate('/tasks')}
               >
-                Cancel
+                Try Again
               </Button>
             </div>
-          </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="form-container">
+              <div className="form-row-single">
+                <div className="form-field">
+                  <Input
+                    name="title"
+                    label="Task Title"
+                    placeholder="Enter task title"
+                    value={taskFormData.title}
+                    onChange={handleChange}
+                    className={errors.title ? 'error' : ''}
+                  />
+                  {errors.title && (
+                    <p className="input-error">{errors.title}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-row-single">
+                <div className="form-field">
+                  <label className="input-label">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    placeholder="Enter task description"
+                    value={taskFormData.description}
+                    onChange={handleChange}
+                    rows={4}
+                    className={`input-field ${errors.description ? 'error' : ''}`}
+                  />
+                  {errors.description && (
+                    <p className="input-error">{errors.description}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-row">
+                {/* Only show status field when editing an existing task */}
+                {isEditing && (
+                  <div className="form-field">
+                    <Select
+                      name="status"
+                      label="Status"
+                      value={taskFormData.status}
+                      onChange={handleChange}
+                      options={[
+                        { value: 'pending', label: 'To Do' },
+                        { value: 'in-progress', label: 'In Progress' },
+                        { value: 'completed', label: 'Completed' },
+                      ]}
+                    />
+                  </div>
+                )}
+
+                <div className="form-field">
+                  <Select
+                    name="priority"
+                    label="Priority"
+                    value={taskFormData.priority}
+                    onChange={handleChange}
+                    options={[
+                      { value: 'low', label: 'Low' },
+                      { value: 'medium', label: 'Medium' },
+                      { value: 'high', label: 'High' },
+                    ]}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-field">
+                  <Input
+                    name="dueDate"
+                    type="date"
+                    label="Due Date"
+                    value={taskFormData.dueDate}
+                    onChange={handleChange}
+                    className={errors.dueDate ? 'error' : ''}
+                  />
+                  {errors.dueDate && (
+                    <p className="input-error">{errors.dueDate}</p>
+                  )}
+                </div>
+
+                <div className="form-field">
+                  <label className="input-label">Assigned To</label>
+                  <div className="flex gap-2 mb-2">
+                    <Input
+                      placeholder="Enter email address"
+                      value={currentEmail}
+                      onChange={(e) => setCurrentEmail(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleAddEmail}
+                      disabled={!currentEmail.trim() || !currentEmail.includes('@')}
+                      size="sm"
+                    >
+                      Add
+                    </Button>
+                  </div>
+                  {taskFormData.assignedTo.length > 0 && (
+                    <div className="space-y-1">
+                      {taskFormData.assignedTo.map((email, index) => (
+                        <div key={index} className="flex items-center justify-between bg-gray-50 px-3 py-2 rounded">
+                          <span className="text-sm">{email}</span>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRemoveEmail(index)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {errors.assignedTo && (
+                    <p className="input-error">{errors.assignedTo}</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="form-row-single">
+                <FileAttachment
+                  files={attachedFiles}
+                  onFilesChange={setAttachedFiles}
+                  maxFiles={5}
+                  maxSizePerFile={10}
+                  acceptedTypes={[
+                    'image/*',
+                    'application/pdf',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                    'application/msword'
+                  ]}
+                />
+              </div>
+
+              <div className="form-actions">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  {isLoading
+                    ? (isEditing ? 'Updating...' : 'Creating...')
+                    : (isEditing ? 'Update Task' : 'Create Task')
+                  }
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => navigate('/tasks')}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
         </Card>
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 };

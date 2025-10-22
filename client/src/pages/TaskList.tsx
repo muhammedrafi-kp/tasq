@@ -1,89 +1,117 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Search, Plus, Filter } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Search, Plus, Filter, Loader2, ListTodo } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { TaskCard } from '../components/TaskCard';
+import { Pagination } from '../components/Pagination';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
 import { Select } from '../components/ui/Select';
 // import { useApp } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import type { TaskStatus, TaskPriority,Task } from '../types/index';
+import type { TaskStatus, TaskPriority, ITask, ApiResponse } from '../types/index';
+import { getTasks } from "../services/taskService"
 
-const mockTasks: Task[] = [
-  {
-    id: '1',
-    title: 'Design new landing page',
-    description: 'Create wireframes and mockups for the new landing page redesign',
-    status: 'in-progress',
-    priority: 'high',
-    dueDate: '2025-10-20',
-    assignee: 'John Doe',
-    createdAt: '2025-10-15',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '2',
-    title: 'Fix login bug',
-    description: 'Users are experiencing issues logging in with social accounts',
-    status: 'todo',
-    priority: 'high',
-    dueDate: '2025-10-18',
-    assignee: 'Jane Smith',
-    createdAt: '2025-10-14',
-    updatedAt: '2025-10-16',
-  },
-  {
-    id: '3',
-    title: 'Update documentation',
-    description: 'Add API documentation for the new endpoints',
-    status: 'completed',
-    priority: 'medium',
-    dueDate: '2025-10-15',
-    assignee: 'John Doe',
-    createdAt: '2025-10-10',
-    updatedAt: '2025-10-15',
-  },
-  {
-    id: '4',
-    title: 'Implement dark mode',
-    description: 'Add dark mode toggle and theme switching functionality',
-    status: 'in-progress',
-    priority: 'medium',
-    dueDate: '2025-10-22',
-    assignee: 'Mike Johnson',
-    createdAt: '2025-10-12',
-    updatedAt: '2025-10-17',
-  },
-  {
-    id: '5',
-    title: 'Set up CI/CD pipeline',
-    description: 'Configure automated testing and deployment workflow',
-    status: 'todo',
-    priority: 'low',
-    dueDate: '2025-10-25',
-    assignee: 'Jane Smith',
-    createdAt: '2025-10-13',
-    updatedAt: '2025-10-14',
-  },
-];
+
 
 export const TaskList: React.FC = () => {
   // const { tasks } = useApp();
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState<{
+    totalCount: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  } | null>(null);
 
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         task.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
+  const fetchTasks = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const params = {
+        page: currentPage,
+        limit: 9,
+        search: searchQuery,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        priority: priorityFilter !== 'all' ? priorityFilter : undefined,
+        sortBy: 'createdAt',
+        sortOrder: 'desc' as const
+      };
 
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+      const res: ApiResponse<ITask[]> = await getTasks(params);
+      console.log("Tasks : ", res.data);
+      
+      if (res.success && res.data) {
+        setTasks(res.data);
+        if (res.pagination) {
+          setPagination(res.pagination);
+        }
+      } else {
+        setError('Failed to fetch tasks');
+      }
+    } catch (error) {
+      console.log("Error fetching tasks :", error);
+      setError('Failed to fetch tasks');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [currentPage, searchQuery, statusFilter, priorityFilter]);
+
+  useEffect(() => {
+    fetchTasks();
+  }, [fetchTasks]);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1); // Reset to first page when searching
+  };
+
+  const handleStatusFilterChange = (value: TaskStatus | 'all') => {
+    setStatusFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  const handlePriorityFilterChange = (value: TaskPriority | 'all') => {
+    setPriorityFilter(value);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Loading animation component for task list area only
+  const TaskListLoadingSpinner = () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
+        <p className="text-gray-600">Loading your tasks...</p>
+      </div>
+    </div>
+  );
+
+  // Error state component for task list area only
+  const TaskListErrorState = () => (
+    <div className="flex items-center justify-center py-12">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ListTodo className="w-8 h-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load tasks</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={() => fetchTasks()} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <DashboardLayout>
@@ -99,9 +127,7 @@ export const TaskList: React.FC = () => {
           </Button>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
+        <div
           className="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
         >
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -112,7 +138,7 @@ export const TaskList: React.FC = () => {
                   type="text"
                   placeholder="Search tasks..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   className="pl-10"
                 />
               </div>
@@ -120,10 +146,10 @@ export const TaskList: React.FC = () => {
 
             <Select
               value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as TaskStatus | 'all')}
+              onChange={(e) => handleStatusFilterChange(e.target.value as TaskStatus | 'all')}
               options={[
                 { value: 'all', label: 'All Status' },
-                { value: 'todo', label: 'To Do' },
+                { value: 'pending', label: 'To Do' },
                 { value: 'in-progress', label: 'In Progress' },
                 { value: 'completed', label: 'Completed' },
               ]}
@@ -131,7 +157,7 @@ export const TaskList: React.FC = () => {
 
             <Select
               value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value as TaskPriority | 'all')}
+              onChange={(e) => handlePriorityFilterChange(e.target.value as TaskPriority | 'all')}
               options={[
                 { value: 'all', label: 'All Priority' },
                 { value: 'low', label: 'Low' },
@@ -143,24 +169,44 @@ export const TaskList: React.FC = () => {
 
           <div className="flex items-center gap-2 mt-4 text-sm text-gray-600">
             <Filter className="w-4 h-4" />
-            <span>Showing {filteredTasks.length} of {tasks.length} tasks</span>
+            <span>
+              {pagination ? (
+                `Showing ${((pagination.currentPage - 1) * pagination.limit) + 1} to ${Math.min(pagination.currentPage * pagination.limit, pagination.totalCount)} of ${pagination.totalCount} tasks`
+              ) : (
+                `Showing ${tasks.length} tasks`
+              )}
+            </span>
           </div>
-        </motion.div>
+        </div>
 
-        {filteredTasks.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12"
-          >
+        {isLoading ? (
+          <TaskListLoadingSpinner />
+        ) : error && tasks.length === 0 ? (
+          <TaskListErrorState />
+        ) : tasks.length === 0 ? (
+          <div className="text-center py-12">
             <p className="text-gray-500 text-lg">No tasks found matching your filters</p>
-          </motion.div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTasks.map((task, index) => (
-              <TaskCard key={task.id} task={task} index={index} />
-            ))}
           </div>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {tasks.map((task, index) => (
+                <TaskCard key={task.id} task={task} index={index} />
+              ))}
+            </div>
+            
+            {pagination && pagination.totalPages > 1 && (
+              <div className="mt-8">
+                <Pagination
+                  currentPage={pagination.currentPage}
+                  totalPages={pagination.totalPages}
+                  onPageChange={handlePageChange}
+                  totalCount={pagination.totalCount}
+                  limit={pagination.limit}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </DashboardLayout>

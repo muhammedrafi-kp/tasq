@@ -5,9 +5,11 @@ import type {RootState} from "../redux/store";
 
 const PublicRoute : React.FC=()=>{
     const isAuthenticated = useSelector((state:RootState)=>state.auth.isAuthenticated);
+
+    console.log("isAuthenticated :",isAuthenticated)
     
     if(isAuthenticated){
-        return <Navigate to="/login" replace />
+        return <Navigate to="/" replace />
     }
 
     return <Outlet/>;

@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import type { LucideIcon } from 'lucide-react';
 import { Card } from './ui/Card';
 
@@ -18,14 +17,9 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon: Icon,
   color,
   trend,
-  delay = 0,
 }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-    >
+    <div>
       <Card hover className="p-6">
         <div className="flex items-center justify-between">
           <div>
@@ -40,6 +34,6 @@ export const StatCard: React.FC<StatCardProps> = ({
           </div>
         </div>
       </Card>
-    </motion.div>
+    </div>
   );
 };

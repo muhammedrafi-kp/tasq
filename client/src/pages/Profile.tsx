@@ -1,31 +1,50 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, Mail, Briefcase, Edit2, Save } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { User, Mail, Edit2, Save, Loader2 } from 'lucide-react';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { Card } from '../components/ui/Card';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-// import { useApp } from '../context/AppContext';
 import type { IUser } from '../types/index';
+import { getUser } from "../services/userService";
 
-
-const mockUser: IUser = {
-  id: '1',
-  name: 'John Doe',
-  email: 'john.doe@example.com',
-  avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=200',
-  // role: 'Product Manager',
-};
 
 export const Profile: React.FC = () => {
-  // const { user, updateUser } = useApp();
-  const [user, setUser] = useState<IUser | null>(mockUser);
+  const [user, setUser] = useState<IUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    // role: user?.role || '',
+    name: '',
+    email: '',
+    // role: '',
   });
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await getUser();
+        if (response.success && response.data) {
+          setUser(response.data);
+          setFormData({
+            name: response.data.name || '',
+            email: response.data.email || '',
+            // role: response.data.role || '',
+          });
+        } else {
+          setError('Failed to fetch user data');
+        }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+        setError('Failed to fetch user data');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,13 +58,53 @@ export const Profile: React.FC = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Loading animation component
+  const LoadingSpinner = () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-600 mb-4" />
+        <p className="text-gray-600">Loading your profile...</p>
+      </div>
+    </div>
+  );
+
+  // Error state component
+  const ErrorState = () => (
+    <div className="flex items-center justify-center min-h-[400px]">
+      <div className="text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <User className="w-8 h-8 text-red-600" />
+        </div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to load profile</h3>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <Button onClick={() => window.location.reload()} variant="outline">
+          Try Again
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <LoadingSpinner />
+      </DashboardLayout>
+    );
+  }
+
+  if (error && !user) {
+    return (
+      <DashboardLayout>
+        <ErrorState />
+      </DashboardLayout>
+    );
+  }
+
   if (!user) return null;
 
   return (
     <DashboardLayout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <div
         className="max-w-4xl mx-auto space-y-6"
       >
         <div className="flex items-center justify-between">
@@ -56,24 +115,18 @@ export const Profile: React.FC = () => {
           {!isEditing && (
             <Button onClick={() => setIsEditing(true)} variant="outline">
               <Edit2 className="w-4 h-4 mr-2" />
-              Edit Profile
+              {/* Edit Profile */}
             </Button>
           )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
+          <div>
             <Card className="p-6">
               <div className="text-center">
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="w-32 h-32 rounded-full mx-auto object-cover border-4 border-gray-100 shadow-lg"
-                />
+                <div className="w-28 h-28 rounded-full bg-gray-300 flex items-center justify-center mx-auto border-4 border-gray-100 shadow-lg">
+                  <User className="w-14 h-14 text-gray-600" />
+                </div>
                 <h2 className="text-xl font-bold text-gray-900 mt-4">{user.name}</h2>
                 {/* <p className="text-gray-600 mt-1">{user.role}</p> */}
                 {/* <div className="mt-6 pt-6 border-t border-gray-200">
@@ -83,14 +136,9 @@ export const Profile: React.FC = () => {
                 </div> */}
               </div>
             </Card>
-          </motion.div>
+          </div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.2 }}
-            className="lg:col-span-2"
-          >
+          <div className="lg:col-span-2">
             <Card className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-6">Personal Information</h3>
 
@@ -124,7 +172,7 @@ export const Profile: React.FC = () => {
                   <div className="flex gap-3 pt-4">
                     <Button type="submit">
                       <Save className="w-4 h-4 mr-2" />
-                      Save Changes
+                      {/* Save Changes */}
                     </Button>
                     <Button
                       type="button"
@@ -175,14 +223,10 @@ export const Profile: React.FC = () => {
                 </div>
               )}
             </Card>
-          </motion.div>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
+        <div>
           {/* <Card className="p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Settings</h3>
             <div className="space-y-4">
@@ -211,8 +255,8 @@ export const Profile: React.FC = () => {
               </div>
             </div>
           </Card> */}
-        </motion.div>
-      </motion.div>
+        </div>
+      </div>
     </DashboardLayout>
   );
 };

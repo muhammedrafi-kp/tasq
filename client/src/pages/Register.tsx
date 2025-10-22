@@ -1,112 +1,158 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, AlertCircle, Loader2 } from 'lucide-react';
 import { Input } from '../components/ui/Input';
 import { Button } from '../components/ui/Button';
-// import { useApp } from '../context/AppContext';
+import { setUser } from '../redux/authSlice';
+import { signupUser } from "../services/authService";
+import { validateRegisterForm } from '../validators/authValidation';
+import type { ValidationErrors } from '../types/index';
+
 
 export const Register: React.FC = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  // const { register } = useApp();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
+  const dispatch = useDispatch();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    
+    // Clear previous errors and messages
+    setErrors({});
+    setApiError('');
+    setSuccessMessage('');
+    
+    // Validate form
+    const validationErrors = validateRegisterForm({ name, email, password, confirmPassword });
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
       return;
     }
 
-    // register(name, email, password);
-    navigate('/dashboard');
+    setIsLoading(true);
+
+    try {
+      const res = await signupUser({ email, name, password, confirmPassword });
+      if (res.success) {
+        dispatch(setUser({ user: res.data }));
+        setSuccessMessage('Account created successfully! Redirecting...');
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1500);
+      } else {
+        setApiError(res.message || 'Registration failed. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setApiError(
+        error?.response?.data?.message || 
+        error?.message || 
+        'An unexpected error occurred. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2 }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4"
-          >
-            <UserPlus className="w-8 h-8 text-white" />
-          </motion.div>
-          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
-          <p className="text-gray-600 mt-2">Join us to start managing your tasks</p>
+    <div className="auth-container">
+      <div className="auth-card">
+        <div className="auth-header">
+          <div className="auth-icon">
+            <UserPlus className="w-8 h-8" style={{ color: 'white' }} />
+          </div>
+          <h1 className="auth-title">Create Account</h1>
+          <p className="auth-subtitle">Join us to start managing your tasks</p>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-white rounded-2xl shadow-lg p-8"
-        >
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <Input
-              type="text"
-              label="Full Name"
-              placeholder="John Doe"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-
-            <Input
-              type="email"
-              label="Email"
-              placeholder="john@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-
-            <Input
-              type="password"
-              label="Password"
-              placeholder="Create a password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-
-            <Input
-              type="password"
-              label="Confirm Password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={error}
-              required
-            />
-
-            <Button type="submit" className="w-full">
-              Create Account
-            </Button>
-          </form>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-medium">
-                Sign in
-              </Link>
-            </p>
+        {/* API Error Message */}
+        {apiError && (
+          <div className="auth-message error">
+            <AlertCircle className="w-5 h-5" />
+            <span>{apiError}</span>
           </div>
-        </motion.div>
-      </motion.div>
+        )}
+
+        {/* Success Message */}
+        {successMessage && (
+          <div className="auth-message success">
+            <UserPlus className="w-5 h-5" />
+            <span>{successMessage}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="auth-form">
+          <Input
+            type="text"
+            label="Full Name"
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            error={errors.name}
+          />
+
+          <Input
+            type="email"
+            label="Email"
+            placeholder="john@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            error={errors.email}
+          />
+
+          <Input
+            type="password"
+            label="Password"
+            placeholder="Create a password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            error={errors.password}
+            showPassword={showPassword}
+            onTogglePassword={() => setShowPassword(!showPassword)}
+          />
+
+          <Input
+            type="password"
+            label="Confirm Password"
+            placeholder="Confirm your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            error={errors.confirmPassword}
+            showPassword={showConfirmPassword}
+            onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+          />
+
+          <Button type="submit" className="w-full" disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Creating Account...
+              </>
+            ) : (
+              'Create Account'
+            )}
+          </Button>
+        </form>
+
+        <div className="auth-footer">
+          <p style={{ fontSize: '14px', color: '#6b7280' }}>
+            Already have an account?{' '}
+            <Link to="/login" className="auth-link">
+              Sign in
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

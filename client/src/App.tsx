@@ -15,29 +15,24 @@ import { Analytics } from './pages/Analytics';
 import ProtectedRoute from './routes/ProtectedRoute';
 import PublicRoute from './routes/PublicRoute';
 
-// const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-// const { isAuthenticated } = useApp();
-// return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-// };
-
 const AppRoutes: React.FC = () => {
-  // const { isAuthenticated } = useApp();
 
   return (
     <Routes>
-      {/* <Route element={<ProtectedRoute />}> */}
+      <Route element={<ProtectedRoute />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tasks" element={<TaskList />} />
+        <Route path="/tasks/new" element={<TaskForm />} />
         <Route path="/tasks/:id" element={<TaskDetail />} />
         <Route path="/tasks/:id/edit" element={<TaskForm />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/" element={<Navigate to="/dashboard" />} />
-      {/* </Route> */}
-      {/* <Route element={<PublicRoute />}>  */}
+      </Route>
+      <Route element={<PublicRoute />}>
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-      {/* </Route> */}
+      </Route>
     </Routes>
   );
 };

@@ -1,18 +1,16 @@
 import React from 'react';
-import { motion } from 'framer-motion';
-import { Calendar, User } from 'lucide-react';
-import { Card } from './ui/Card';
-import type {Task} from "../types/index";
+import { Calendar, User, Paperclip, MessageCircle, Clock } from 'lucide-react';
+import type { ITask } from "../types/index";
 import { Link } from 'react-router-dom';
 
 interface TaskCardProps {
-  task: Task;
+  task: ITask;
   index: number;
 }
 
-export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
+export const TaskCard: React.FC<TaskCardProps> = ({ task }) => {
   const statusColors = {
-    'todo': 'bg-gray-100 text-gray-700',
+    'pending': 'bg-gray-100 text-gray-700',
     'in-progress': 'bg-blue-100 text-blue-700',
     'completed': 'bg-green-100 text-green-700',
   };
@@ -23,41 +21,75 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, index }) => {
     'low': 'bg-green-100 text-green-700',
   };
 
+  // Format date to readable format
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-    >
-      <Link to={`/tasks/${task.id}`}>
-        <Card hover className="p-5 cursor-pointer">
-          <div className="flex items-start justify-between mb-3">
-            <h3 className="font-semibold text-gray-900 text-lg flex-1">{task.title}</h3>
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${priorityColors[task.priority]}`}>
-              {task.priority}
-            </span>
+    <div>
+      <Link to={`/tasks/${task.id}`} className="task-card-link">
+        <div className="task-card">
+          <div className="task-card-header">
+            <h3 className="task-card-title">{task?.title}</h3>
+            <div className="flex items-center gap-2">
+              <span className={`task-card-priority ${priorityColors[task.priority]}`}>
+                {task.priority}
+              </span>
+              <span className={`task-card-status ${statusColors[task.status]}`}>
+                {task?.status.replace('-', ' ')}
+              </span>
+            </div>
           </div>
 
-          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{task.description}</p>
+          <p className="task-card-description">{task?.description}</p>
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <div className="flex items-center gap-1.5">
-                <Calendar className="w-4 h-4" />
-                <span>{task.dueDate}</span>
+          <div className="task-card-footer">
+            {/* Top row - Created date and Due date */}
+            <div className="flex items-center gap-3 text-sm text-gray-600 mb-2">
+              <div className="flex items-center gap-1">
+                <Clock className="w-4 h-4" />
+                <span>Created: {formatDate(task.createdAt)}</span>
               </div>
-              <div className="flex items-center gap-1.5">
-                <User className="w-4 h-4" />
-                <span>{task.assignee}</span>
-              </div>
+              {task?.dueDate && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Due: {formatDate(task.dueDate)}</span>
+                </div>
+              )}
             </div>
 
-            <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${statusColors[task.status]}`}>
-              {task.status.replace('-', ' ')}
-            </span>
+            {/* Bottom row - Counts and metrics */}
+            <div className="flex items-center gap-3 text-sm text-gray-600">
+              {task.assignedTo && task.assignedTo.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <User className="w-4 h-4" />
+                  <span>{task.assignedTo.length}</span>
+                </div>
+              )}
+
+              {task.attachments && task.attachments.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <Paperclip className="w-4 h-4" />
+                  <span>{task.attachments.length}</span>
+                </div>
+              )}
+
+              {task.comments && task.comments.length > 0 && (
+                <div className="flex items-center gap-1">
+                  <MessageCircle className="w-4 h-4" />
+                  <span>{task.comments.length}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </Card>
+        </div>
       </Link>
-    </motion.div>
+    </div>
   );
 };
