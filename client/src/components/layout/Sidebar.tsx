@@ -13,7 +13,13 @@ const menuItems = [
   { icon: User, label: 'Profile', path: '/profile' },
 ];
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isOpen?: boolean;
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isOpen = true, isMobile = false, onClose }) => {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
 
@@ -32,7 +38,7 @@ const Sidebar: React.FC = () => {
   }
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isMobile ? 'sidebar-mobile' : ''} ${!isOpen ? 'sidebar-hidden' : ''}`}>
       <div className="flex flex-col h-full">
         <div className="p-6 border-b border-gray-200">
           <h1 className="text-2xl font-bold text-blue-600">TasQ</h1>
@@ -45,7 +51,7 @@ const Sidebar: React.FC = () => {
             const isActive = location.pathname === item.path;
 
             return (
-              <Link key={item.path} to={item.path}>
+              <Link key={item.path} to={item.path} onClick={isMobile ? onClose : undefined}>
                 <div
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                     ? 'bg-blue-50 text-blue-600'
